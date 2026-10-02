@@ -1,0 +1,457 @@
+/* QBIKK landing page (from tommyngon/qbikk-landing-page-claude), scoped under .qbikk so it can
+   live as a section of the portfolio without leaking styles either way. */
+
+.qbikk {
+  /* Supernova palette */
+  --nova-blue: #2a6bff;
+  --nova-teal: #1fc7db;
+  --nova-green: #4cdb85;
+  --nova-orange: #ff8f38;
+
+  --q-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --q-serif: var(--font-qbikk-serif), Georgia, serif;
+  --q-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --lvl: 0;
+}
+.qbikk[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fafafb;
+  --ink: #0b0c10;
+  --ink-2: #5e6270;
+  --ink-3: #a2a6b3;
+  --hair: rgba(11, 12, 16, 0.07);
+
+  --glass: rgba(244, 246, 250, 0.58);
+  --glass-rim: rgba(255, 255, 255, 0.9);
+  --glass-edge: rgba(11, 12, 16, 0.09);
+  --glass-hi: rgba(255, 255, 255, 1);
+  --glass-shadow: 0 12px 32px -14px rgba(20, 40, 80, 0.22), 0 1px 2px rgba(11, 12, 16, 0.04);
+
+  --solid: #0b0c10;
+  --solid-ink: #ffffff;
+}
+.qbikk[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #06070a;
+  --ink: #f3f4f7;
+  --ink-2: #9a9fae;
+  --ink-3: #5a5f6e;
+  --hair: rgba(255, 255, 255, 0.08);
+
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-rim: rgba(255, 255, 255, 0.13);
+  --glass-edge: rgba(0, 0, 0, 0.6);
+  --glass-hi: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.9);
+
+  --solid: #f3f4f7;
+  --solid-ink: #0b0c10;
+}
+
+.qbikk * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+.qbikk {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--q-sans);
+  -webkit-font-smoothing: antialiased;
+  /* clip, not hidden: the cube canvas is larger than the section and a hidden box can
+     still be scrolled by focus changes */
+  overflow: clip;
+}
+.qbikk button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+}
+
+.qbikk .glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 0.5px solid var(--glass-rim);
+  box-shadow: inset 0 0.5px 0 var(--glass-hi), 0 0 0 0.5px var(--glass-edge), var(--glass-shadow);
+}
+
+/* ── Frame ───────────────────────────────────────── */
+.qbikk .page {
+  position: relative;
+  height: 100svh;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  justify-items: center;
+}
+.qbikk .cube {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.qbikk header {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px clamp(20px, 3.2vw, 44px);
+}
+.qbikk .logo {
+  display: block;
+  height: 19px;
+  aspect-ratio: 460 / 114;
+  background: var(--ink);
+  -webkit-mask: url(/qbikk/qbikk-wordmark.png) center / contain no-repeat;
+  mask: url(/qbikk/qbikk-wordmark.png) center / contain no-repeat;
+}
+.qbikk .actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qbikk .theme {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--ink-2);
+  transition: color 0.3s var(--ease);
+}
+.qbikk .theme:hover {
+  color: var(--ink);
+}
+.qbikk .theme svg {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  transition: opacity 0.35s var(--ease), transform 0.5s var(--ease);
+}
+.qbikk[data-theme="light"] .theme .moon,
+.qbikk[data-theme="dark"] .theme .sun {
+  opacity: 0;
+  transform: rotate(-45deg) scale(0.5);
+}
+.qbikk .cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px 0 16px;
+  border-radius: 999px;
+  background: var(--solid);
+  color: var(--solid-ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  transition: opacity 0.3s var(--ease);
+}
+.qbikk .cta:hover {
+  opacity: 0.86;
+}
+.qbikk .cta svg {
+  width: 13px;
+  height: 13px;
+  transition: transform 0.3s var(--ease);
+}
+.qbikk .cta:hover svg {
+  transform: translateX(2px);
+}
+.qbikk :focus-visible {
+  outline: 1.5px solid var(--nova-teal);
+  outline-offset: 3px;
+}
+
+.qbikk .intro {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: clamp(0px, 1.5vh, 20px) 20px 0;
+}
+.qbikk h2 {
+  font-family: var(--q-sans);
+  font-weight: 500;
+  font-size: clamp(38px, 4.4vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+.qbikk h2 em {
+  font-family: var(--q-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.1em;
+  letter-spacing: -0.015em;
+}
+.qbikk .slogan {
+  margin-top: 14px;
+  font-size: clamp(15px, 1.2vw, 17px);
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+}
+
+.qbikk .stage {
+  position: relative;
+  width: 100%;
+}
+
+/* ── Dock: compact liquid-glass pill ─────────────── */
+.qbikk .dock {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px max(28px, env(safe-area-inset-bottom));
+}
+.qbikk .pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(380px, calc(100vw - 32px));
+  height: 46px;
+  padding: 0 6px 0 16px;
+  border-radius: 999px;
+}
+.qbikk .dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  transition: background 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+.qbikk[data-state="listening"] .dot {
+  background: var(--nova-green);
+  box-shadow: 0 0 8px var(--nova-green);
+  animation: qbikk-pulse 1.3s ease-in-out infinite;
+}
+.qbikk[data-state="processing"] .dot {
+  background: var(--nova-blue);
+  box-shadow: 0 0 8px var(--nova-blue);
+}
+.qbikk[data-state="done"] .dot {
+  background: var(--nova-orange);
+  box-shadow: 0 0 8px var(--nova-orange);
+}
+@keyframes qbikk-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.qbikk .text {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  height: 20px;
+}
+.qbikk .text.overflow {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px);
+  mask-image: linear-gradient(90deg, transparent, #000 28px);
+}
+.qbikk .line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.008em;
+  transition: transform 0.28s var(--ease);
+}
+.qbikk .line .ph {
+  color: var(--ink-2);
+}
+.qbikk .line .final {
+  color: var(--ink);
+}
+.qbikk .line .interim {
+  color: var(--ink-3);
+}
+.qbikk .line .done {
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.qbikk .line .done svg {
+  width: 12px;
+  height: 12px;
+  color: var(--nova-orange);
+}
+.qbikk .time {
+  flex: none;
+  font-family: var(--q-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+.qbikk .mic-wrap {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+}
+.qbikk .ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(from 210deg, var(--nova-blue), var(--nova-teal), var(--nova-green), var(--nova-orange), var(--nova-blue));
+  filter: blur(7px);
+  opacity: 0;
+  transform: scale(calc(1.05 + var(--lvl) * 0.6));
+  transition: opacity 0.4s var(--ease);
+}
+.qbikk[data-state="listening"] .ring {
+  opacity: 0.95;
+}
+.qbikk .mic {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--solid);
+  color: var(--solid-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.25s var(--ease), background 0.4s var(--ease), color 0.4s var(--ease);
+}
+.qbikk .mic:hover {
+  transform: scale(1.06);
+}
+.qbikk .mic:active {
+  transform: scale(0.94);
+}
+.qbikk .mic svg {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  transition: opacity 0.25s var(--ease), transform 0.35s var(--ease);
+}
+.qbikk .mic .i-stop {
+  opacity: 0;
+  transform: scale(0.5);
+}
+.qbikk[data-state="listening"] .mic {
+  background: #ffffff;
+  color: #0b0c10;
+}
+.qbikk[data-state="listening"] .mic .i-mic {
+  opacity: 0;
+  transform: scale(0.5);
+}
+.qbikk[data-state="listening"] .mic .i-stop {
+  opacity: 1;
+  transform: none;
+}
+.qbikk .mic-wrap::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1px solid transparent;
+  border-top-color: var(--nova-teal);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.qbikk[data-state="processing"] .mic-wrap::after {
+  opacity: 1;
+  animation: qbikk-spin 0.9s linear infinite;
+}
+.qbikk[data-state="processing"] .mic {
+  pointer-events: none;
+  opacity: 0.5;
+}
+@keyframes qbikk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* recalled memory chips, floating above the pill */
+.qbikk .memo {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.qbikk .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity 0.45s var(--ease), transform 0.55s var(--ease);
+}
+.qbikk .chip.in {
+  opacity: 1;
+  transform: none;
+}
+.qbikk .chip .k {
+  color: var(--ink-3);
+}
+.qbikk .chip .v {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.qbikk .note {
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  color: var(--ink-3);
+}
+
+@media (max-width: 640px) {
+  .qbikk header {
+    padding: 18px 16px;
+  }
+  .qbikk .logo {
+    height: 16px;
+  }
+  .qbikk .cta .long {
+    display: none;
+  }
+  .qbikk .chip {
+    font-size: 12px;
+  }
+}
+@media (max-height: 620px) {
+  .qbikk .page {
+    height: auto;
+    min-height: 620px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qbikk[data-state="listening"] .dot {
+    animation: none;
+  }
+}

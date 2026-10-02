@@ -23,13 +23,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tommy-portfolio.vercel.app"),
-  title: "Tommy — Developer & Maker",
+  title: "Tommy Ngo Nguyen",
   description:
-    "Software engineer and textile maker. Building apps and sewing garments with the same precision.",
+    "Tommy Ngo Nguyen. Where design, product and clothing meet.",
   openGraph: {
-    title: "Tommy — Developer & Maker",
+    title: "Tommy Ngo Nguyen",
     description:
-      "Software engineer and textile maker. Building apps and sewing garments with the same precision.",
+      "Tommy Ngo Nguyen. Where design, product and clothing meet.",
     url: "/",
     siteName: "Tommy",
     locale: "en",
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Tommy — Developer & Maker",
+    title: "Tommy Ngo Nguyen",
     description:
-      "Software engineer and textile maker. Building apps and sewing garments with the same precision.",
+      "Tommy Ngo Nguyen. Where design, product and clothing meet.",
   },
 };
 

@@ -109,7 +109,7 @@ html {
   flex-direction: column;
   align-items: center;
   min-height: 100svh;
-  background: #f1eee9;
+  background: #00b140;
   color: #111111;
   font-family: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
   overflow: clip;

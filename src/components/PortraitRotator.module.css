@@ -1,0 +1,101 @@
+.root {
+  --w: clamp(120px, 10.5vw, 150px);
+  width: var(--w);
+  height: calc(var(--w) * 4 / 3);
+  aspect-ratio: auto;
+  perspective: 900px;
+  perspective-origin: 50% 40%;
+}
+
+@media (max-width: 640px) {
+  .root {
+    --w: clamp(105px, 30vw, 125px);
+  }
+}
+
+.cube {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  /* as θ grows the front face slides off to the right and the right profile (nose pointing
+     right) comes round from the left — the way a real head turns */
+  transform: rotateX(-7deg) rotateY(var(--theta, 0deg));
+  will-change: transform;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  user-select: none;
+}
+
+.front {
+  transform: rotateY(0deg) translateZ(calc(var(--w) / 2));
+}
+.right {
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+}
+.back {
+  transform: rotateY(180deg) translateZ(calc(var(--w) / 2));
+}
+.left {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2));
+}
+
+.img {
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cap {
+  position: absolute;
+  left: 0;
+  width: var(--w);
+  height: var(--w);
+  top: calc((var(--w) * 4 / 3 - var(--w)) / 2);
+  background: #e9e8e5;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateX(90deg) translateZ(calc(var(--w) * 2 / 3));
+}
+
+.floor {
+  position: absolute;
+  left: 5%;
+  width: 90%;
+  height: 10px;
+  top: calc(100% - 3px);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.18) 0%, transparent 70%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* the "click to rotate" cue sits clear of the box's tilt and floor shadow; its soft,
+   translucent colour still comes from .portrait-cue in globals.css */
+.root .cue {
+  top: calc(100% + 30px);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

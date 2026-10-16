@@ -9,7 +9,6 @@
   --nova-orange: #ff8f38;
 
   --q-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --q-serif: var(--font-qbikk-serif), Georgia, serif;
   --q-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --lvl: 0;
@@ -105,11 +104,11 @@
 }
 .qbikk .logo {
   display: block;
-  height: 19px;
-  aspect-ratio: 460 / 114;
+  height: 16px;
+  aspect-ratio: 882 / 142;
   background: var(--ink);
-  -webkit-mask: url(/qbikk/qbikk-wordmark.png) center / contain no-repeat;
-  mask: url(/qbikk/qbikk-wordmark.png) center / contain no-repeat;
+  -webkit-mask: url(/qbikk/qbikk-logo.png) center / contain no-repeat;
+  mask: url(/qbikk/qbikk-logo.png) center / contain no-repeat;
 }
 .qbikk .actions {
   display: flex;
@@ -177,20 +176,6 @@
   z-index: 2;
   text-align: center;
   padding: clamp(0px, 1.5vh, 20px) 20px 0;
-}
-.qbikk h2 {
-  font-family: var(--q-sans);
-  font-weight: 500;
-  font-size: clamp(38px, 4.4vw, 64px);
-  line-height: 1;
-  letter-spacing: -0.045em;
-}
-.qbikk h2 em {
-  font-family: var(--q-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.1em;
-  letter-spacing: -0.015em;
 }
 .qbikk .slogan {
   margin-top: 14px;
@@ -435,7 +420,7 @@
     padding: 18px 16px;
   }
   .qbikk .logo {
-    height: 16px;
+    height: 13px;
   }
   .qbikk .cta .long {
     display: none;

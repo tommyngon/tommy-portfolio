@@ -1,7 +1,5 @@
 export const CONTACT = {
   email: "tommy.nn99@gmail.com",
-  phone: "+47 478 021 69",
-  phoneHref: "+4747802169",
 };
 
 export const SOCIALS = [

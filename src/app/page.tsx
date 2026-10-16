@@ -1,9 +1,12 @@
 import { IBM_Plex_Mono } from "next/font/google";
+import Link from "next/link";
 import HoverTranslate from "@/components/HoverTranslate";
+import OverviewMenu from "@/components/OverviewMenu";
 import PortraitRotator from "@/components/PortraitRotator";
 import SiteFooter from "@/components/SiteFooter";
 import QbikkSection from "@/components/qbikk/QbikkSection";
 import UniformCover from "@/components/uniform/UniformCover";
+import AcademyFront from "@/components/tomatosharp/AcademyFront";
 import { CONTACT, SOCIALS } from "@/lib/site";
 
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono" });
@@ -12,13 +15,11 @@ const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variabl
 // for the letter in the same position of the Norwegian line.
 const PARAGRAPHS: [string, string][][] = [
   [
-    ["This is where design, product,", "Her møtes design, produkt"],
-    ["and clothing meet.", "og klær."],
+    ["Clothing, software, a company.", "Klær, programvare, et selskap."],
   ],
   [
-    ["Here are my collections, apps,", "Her er mine kolleksjoner, apper"],
-    ["and startup —", "og oppstart —"],
-    ["process, decisions, detail.", "prosess, valg, detaljer."],
+    ["Different materials,", "Ulike materialer,"],
+    ["the same attention.", "samme oppmerksomhet."],
   ],
   [
     ["An ongoing study of form, function,", "En pågående studie av form, funksjon"],
@@ -33,15 +34,11 @@ export default function Home() {
         <h1 className="sr-only">Tommy Ngo Nguyen</h1>
 
         <nav className="sheet-bar" aria-label="Primary">
-          <a href="#portfolio" className="sheet-link">
-            <HoverTranslate en="portfolio" no="portefølje" align="start" />
-          </a>
-          <a href="#overview" className="sheet-link">
-            <HoverTranslate en="overview" no="oversikt" />
-          </a>
-          <a href="#about" className="sheet-link">
+          <span>portfolio</span>
+          <OverviewMenu />
+          <Link href="/about">
             <HoverTranslate en="about" no="om meg" align="end" />
-          </a>
+          </Link>
         </nav>
 
         <div className="sheet-portrait">
@@ -78,10 +75,7 @@ export default function Home() {
         <footer className="sheet-bar sheet-bar-bottom">
           <address className="sheet-contact">
             <a href={`mailto:${CONTACT.email}`} className="sheet-link">
-              E: {CONTACT.email}
-            </a>
-            <a href={`tel:${CONTACT.phoneHref}`} className="sheet-link">
-              P: {CONTACT.phone}
+              {CONTACT.email}
             </a>
           </address>
           <div className="sheet-socials">
@@ -99,6 +93,7 @@ export default function Home() {
 
       <div id="portfolio">
         <QbikkSection />
+        <AcademyFront />
         <UniformCover />
       </div>
 

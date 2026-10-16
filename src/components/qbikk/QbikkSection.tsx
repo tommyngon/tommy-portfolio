@@ -4,13 +4,12 @@
 // self-contained section. The markup and shader are unchanged; the script is scoped to this
 // section, its theme is local to it, and the cube only renders while the section is on screen.
 
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { useEffect, useRef } from "react";
 import "./qbikk.css";
 
 const geist = Geist({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-geist" });
 const geistMono = Geist_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-geist-mono" });
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: "italic", variable: "--font-qbikk-serif" });
 
 const VERT = `attribute vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }`;
 const FRAG = `
@@ -506,7 +505,7 @@ export default function QbikkSection() {
     <section
       ref={rootRef}
       id="qbikk"
-      className={`qbikk ${geist.variable} ${geistMono.variable} ${serif.variable}`}
+      className={`qbikk ${geist.variable} ${geistMono.variable}`}
       data-theme="light"
       data-state="idle"
       aria-label="QBIKK"
@@ -526,9 +525,9 @@ export default function QbikkSection() {
                 <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
               </svg>
             </button>
-            <a className="cta" href="#waitlist">
+            <a className="cta" href="https://qbikk.com" target="_blank" rel="noopener noreferrer">
               <span>
-                Join<span className="long"> the waitlist</span>
+                Visit<span className="long"> qbikk.com</span>
               </span>
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M3 8h10M9 4l4 4-4 4" />
@@ -538,9 +537,6 @@ export default function QbikkSection() {
         </header>
 
         <div className="intro">
-          <h2>
-            Your AI <em>secretary</em>.
-          </h2>
           <p className="slogan">Your pocket-sized perfect memory.</p>
         </div>
 

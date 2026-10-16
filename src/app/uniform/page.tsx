@@ -7,8 +7,8 @@ import { GARMENTS } from "@/lib/uniform";
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono" });
 
 export const metadata: Metadata = {
-  title: "uniform — catalogue · Tommy Ngo Nguyen",
-  description: "uniform: clothing drafted, cut and sewn by hand by Tommy Ngo Nguyen.",
+  title: "söm — catalogue · Tommy Ngo Nguyen",
+  description: "söm: clothing drafted, cut and sewn by hand by Tommy Ngo Nguyen.",
 };
 
 // A catalogue page after Hadeland Glassverk's 1965 product catalogue: nine plates on a
@@ -17,11 +17,11 @@ export default function UniformCatalogue() {
   return (
     <main className={`catalogue ${mono.variable}`}>
       <Link href="/#uniform" className="catalogue-back">
-        ← uniform
+        ← söm
       </Link>
 
-      <article className="catalogue-sheet" aria-label="uniform catalogue, page 20">
-        <h1 className="sr-only">uniform — produktkatalog</h1>
+      <article className="catalogue-sheet" aria-label="söm catalogue, page 20">
+        <h1 className="sr-only">söm — produktkatalog</h1>
         <ul className="catalogue-grid">
           {GARMENTS.map((g, i) => (
             <li key={g.id} className="catalogue-item" style={{ ["--tilt" as string]: `${((i * 37) % 7) / 10 - 0.3}deg` }}>

@@ -272,3 +272,10 @@
     animation: none;
   }
 }
+
+/* reduced motion: never show the intro, not even for the frame before hydration */
+@media (prefers-reduced-motion: reduce) {
+  .preloader {
+    display: none;
+  }
+}

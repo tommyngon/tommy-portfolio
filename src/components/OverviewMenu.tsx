@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import HoverTranslate from "@/components/HoverTranslate";
 import styles from "./OverviewMenu.module.css";
 
 const ITEMS = [
-  { n: "01", label: "qbikk", kind: "startup", href: "#qbikk" },
-  { n: "02", label: "tomatosharp academy", kind: "onboarding site", href: "#academy" },
-  { n: "03", label: "söm", kind: "clothing", href: "#uniform" },
+  { n: "01", label: "qbikk", kind: "startup", href: "/work/qbikk" },
+  { n: "02", label: "tomatosharp academy", kind: "onboarding site", href: "/work/tomatosharp" },
+  { n: "03", label: "söm", kind: "clothing", href: "/work/som" },
 ];
 
 const CLOSE_DELAY = 160;
@@ -91,11 +92,11 @@ export default function OverviewMenu() {
         <ul className={styles.list}>
           {ITEMS.map((it, i) => (
             <li key={it.href} className={styles.item} style={{ "--i": i } as React.CSSProperties}>
-              <a href={it.href} className={styles.row} onClick={close}>
+              <Link href={it.href} className={styles.row} onClick={close}>
                 <span className={styles.num}>{it.n}</span>
                 <span className={styles.label}>{it.label}</span>
                 <span className={styles.kind}>{it.kind}</span>
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

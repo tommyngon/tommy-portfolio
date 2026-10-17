@@ -33,7 +33,8 @@ export default function Preloader() {
       return () => window.clearTimeout(t);
     }
 
-    delete html.dataset.intro;
+    // "running" tells the reveals (RevealLines, Scramble) to wait for studio:intro-done
+    html.dataset.intro = "running";
     html.style.overflow = "hidden";
     const done = () => {
       html.style.overflow = "";

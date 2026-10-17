@@ -3,10 +3,6 @@ import Link from "next/link";
 import HoverTranslate from "@/components/HoverTranslate";
 import OverviewMenu from "@/components/OverviewMenu";
 import PortraitRotator from "@/components/PortraitRotator";
-import SiteFooter from "@/components/SiteFooter";
-import QbikkSection from "@/components/qbikk/QbikkSection";
-import UniformCover from "@/components/uniform/UniformCover";
-import AcademyFront from "@/components/tomatosharp/AcademyFront";
 import { CONTACT, SOCIALS } from "@/lib/site";
 
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono" });
@@ -90,14 +86,6 @@ export default function Home() {
           </div>
         </footer>
       </section>
-
-      <div id="portfolio">
-        <QbikkSection />
-        <AcademyFront />
-        <UniformCover />
-      </div>
-
-      <SiteFooter />
     </main>
   );
 }

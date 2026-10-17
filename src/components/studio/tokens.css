@@ -1,0 +1,62 @@
+/* Studio design tokens — the one source for colour, type, spacing and motion.
+   Scoped to .studio (the root of every page except the landing sheet). */
+.studio {
+  --c-paper: #f1eee9;
+  --c-ink: #111111;
+  --c-muted: #8a837a;
+  --c-hair: rgba(17, 17, 17, 0.12);
+  --c-overlay: rgba(17, 17, 17, 0.7);
+
+  --f-ui: var(--font-gothic), "Helvetica Neue", Arial, sans-serif;
+  --f-title: var(--font-caslon), "Big Caslon", Georgia, serif;
+
+  --t-xs: 11px;
+  --t-s: 12px;
+  --t-m: 14px;
+  --t-body: 16px;
+  --t-l: 24px;
+
+  --gutter: 20px;
+  --header-h: 76px;
+  --column-w: 30vw;
+  --gap: 20px;
+
+  --ease: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --d-fast: 300ms;
+  --d-base: 400ms;
+  --d-slow: 700ms;
+  --stagger: 80ms;
+
+  background: var(--c-paper);
+  color: var(--c-ink);
+  font-family: var(--f-ui);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  min-height: 100svh;
+}
+@media (max-width: 640px) {
+  .studio {
+    --t-m: 13px;
+    --t-body: 15px;
+    --t-l: 20px;
+    --gutter: 16px;
+    --header-h: 56px;
+    --column-w: 70vw;
+  }
+}
+/* the two recurring text styles */
+.studio .ui-caps {
+  font-family: var(--f-ui);
+  font-size: var(--t-s);
+  font-weight: 500;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+.studio .title-caps {
+  font-family: var(--f-title);
+  font-size: var(--t-m);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}

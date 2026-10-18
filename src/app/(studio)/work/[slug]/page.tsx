@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import HoverText from "@/components/HoverText";
 import QbikkSection from "@/components/qbikk/QbikkSection";
-import AcademyFront from "@/components/tomatosharp/AcademyFront";
-import UniformCover from "@/components/uniform/UniformCover";
+import SeamColumn from "@/components/studio/SeamColumn";
 import { PROJECTS, getProject } from "@/lib/work";
 import styles from "./project.module.css";
 
@@ -19,10 +19,80 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: `${project.title} — Tommy Ngo Nguyen`, description: project.summary };
 }
 
-function Piece({ slug }: { slug: string }) {
-  if (slug === "qbikk") return <QbikkSection />;
-  if (slug === "tomatosharp") return <AcademyFront />;
-  if (slug === "som") return <UniformCover />;
+// A contained, calm "exhibit" below the images. Only QBIKK's live preview and the
+// Tomatosharp front-page screenshot are shown; artefakt archive points to its catalogue instead.
+const NO: Record<string, string> = {
+  Role: "Rolle",
+  Started: "Startet",
+  Status: "Status",
+  Type: "Type",
+  "Built with": "Bygget med",
+  "Head of product": "Produktsjef",
+  "In development": "I utvikling",
+  Startup: "Oppstart",
+  Employee: "Ansatt",
+  "AI, in HTML, CSS and JavaScript — no framework": "KI, i HTML, CSS og JavaScript — uten rammeverk",
+  "Onboarding site": "Opplæringsside",
+  "Designer and maker": "Designer og skaper",
+  Ongoing: "Pågående",
+  "Clothing and products": "Klær og produkter",
+  Application: "Applikasjon",
+  "A pocket-sized AI secretary — your perfect memory.": "En lommestor KI-sekretær — ditt perfekte minne.",
+  "An onboarding site for the staff of a knife store: a daily knife, three learning paths, a progress board.":
+    "Et opplæringsområde for de ansatte i en knivbutikk: en daglig kniv, tre læringsløp og en fremdriftstavle.",
+  "Clothing drafted, cut and sewn by hand.": "Klær tegnet, skåret og sydd for hånd.",
+  "An application.": "En applikasjon.",
+  "Made by hand, in small numbers": "Laget for hånd, i små opplag",
+  "More soon.": "Mer snart.",
+  "QBIKK, Trondheim, Norway": "QBIKK, Trondheim, Norge",
+  "Built for Tomatosharp": "Laget for Tomatosharp",
+  "Sewn by Tommy Ngo Nguyen in Trondheim, Norway": "Sydd av Tommy Ngo Nguyen i Trondheim, Norge",
+  "Tommy Ngo Nguyen, Trondheim, Norway": "Tommy Ngo Nguyen, Trondheim, Norge",
+  "Live preview": "Live-visning",
+  "The front page": "Forsiden",
+  "← Back": "← Tilbake",
+  "Open the catalogue →": "Åpne katalogen →",
+  "Next project →": "Neste prosjekt →",
+};
+
+// English text with its Norwegian twin for the hover flip; anything unlisted stays plain.
+function T({ en, as }: { en: string; as?: "p" }) {
+  return NO[en] ? <HoverText en={en} no={NO[en]} as={as} /> : <>{en}</>;
+}
+
+function Exhibit({ slug }: { slug: string }) {
+  if (slug === "qbikk") {
+    return (
+      <section className={styles.exhibit} aria-label="QBIKK live preview">
+        <p className={`ui-caps ${styles.exhibitLabel}`}><T en="Live preview" /></p>
+        <div className={`${styles.frame} ${styles.frameTall}`}>
+          <QbikkSection />
+        </div>
+      </section>
+    );
+  }
+  if (slug === "tomatosharp-academy") {
+    return (
+      <section className={styles.exhibit} aria-label="Tomatosharp Academy front page">
+        <p className={`ui-caps ${styles.exhibitLabel}`}><T en="The front page" /></p>
+        <a
+          className={styles.frame}
+          href="https://tomatosharp-academy.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open Tomatosharp Academy"
+        >
+          <Image
+            src="/tomatosharp/academy-front.webp"
+            alt="Tomatosharp Academy front page with the knife of the day and three learning levels"
+            fill
+            sizes="(max-width: 640px) 100vw, 100vw"
+            style={{ objectFit: "cover", objectPosition: "top" }}
+          />
+        </a>
+      </section>
+    );
+  }
   return null;
 }
 
@@ -33,58 +103,65 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   const index = PROJECTS.findIndex((p) => p.slug === slug);
   const next = PROJECTS[(index + 1) % PROJECTS.length];
+  const href = project.link?.href ?? (slug === "artefakt-archive" ? "/uniform" : "/work");
+  const items = (project.images ?? []).map((img) => ({ ...img, href, caption: project.title }));
 
   return (
-    <main id="main">
-      <div className={styles.first}>
-        <h1 className={`title-caps ${styles.title}`}>{project.title}</h1>
+    <main id="main" className={styles.page}>
+      <Link href="/work" className={`ui-caps ${styles.back}`}>
+        <T en="← Back" />
+      </Link>
 
-        <dl className={styles.specs}>
-          {project.specs.map((s) => (
-            <div key={s.label} className={styles.spec}>
-              <dt>{s.label}:</dt> <dd>{s.value}</dd>
-            </div>
-          ))}
-        </dl>
-
-        <Link href="/work" className={`ui-caps ${styles.back}`}>
-          ← BACK
-        </Link>
-
-        <div className={styles.meta}>
-          <p className={styles.outcome}>
-            {project.link ? (
-              <a href={project.link.href} target="_blank" rel="noopener noreferrer">
-                {project.outcome}
-              </a>
-            ) : (
-              project.outcome
-            )}
-          </p>
-          <p className={styles.credit}>{project.credit}</p>
+      <div className={styles.stage}>
+        <div className={styles.hero}>
+          <h1 className={`title-caps ${styles.title}`}>{project.title}</h1>
+          <dl className={styles.specs}>
+            {project.specs.map((s) => (
+              <div key={s.label} className={styles.spec}>
+                <dt className="ui-caps"><T en={s.label} /></dt>
+                <dd><T en={s.value} /></dd>
+              </div>
+            ))}
+          </dl>
         </div>
-
-        <ul className={styles.images}>
-          {project.images.map((img, i) => (
-            <li key={img.src} className={styles.image}>
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                sizes="(max-width: 640px) 100vw, 24vw"
-                priority={i === 0}
-                style={{ objectFit: "cover" }}
-              />
-            </li>
-          ))}
-        </ul>
+        <div className={styles.spacer} />
+        {items.length > 0 && (
+          <>
+            <SeamColumn items={items} />
+            <div className={styles.tail} />
+          </>
+        )}
       </div>
 
-      <Piece slug={project.slug} />
+      <Exhibit slug={project.slug} />
 
-      <Link href={`/work/${next.slug}`} className={`ui-caps ${styles.next}`}>
-        NEXT PROJECT →
-      </Link>
+      <div className={styles.end}>
+        {items.length === 0 ? (
+          <p className={`ui-caps ${styles.summary}`}><T en="More soon." /></p>
+        ) : (
+          <>
+            <p className={styles.summary}><T en={project.summary} /></p>
+            <div className={`ui-caps ${styles.meta}`}>
+              {project.link ? (
+                <a href={project.link.href} target="_blank" rel="noopener noreferrer" className={styles.link}>
+                  <T en={project.outcome} /> ↗
+                </a>
+              ) : (
+                <p><T en={project.outcome} /></p>
+              )}
+              {slug === "artefakt-archive" && (
+                <Link href="/uniform" className={styles.link}>
+                  <T en="Open the catalogue →" />
+                </Link>
+              )}
+              <p className={styles.credit}><T en={project.credit} /></p>
+            </div>
+          </>
+        )}
+        <Link href={`/work/${next.slug}`} className={`ui-caps ${styles.next}`}>
+          <T en="Next project →" />
+        </Link>
+      </div>
     </main>
   );
 }

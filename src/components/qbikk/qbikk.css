@@ -61,6 +61,8 @@
   /* clip, not hidden: the cube canvas is larger than the section and a hidden box can
      still be scrolled by focus changes */
   overflow: clip;
+  /* lives inside a framed exhibit on the project page: fill the frame, never the viewport */
+  height: 100%;
 }
 .qbikk button {
   font: inherit;
@@ -80,9 +82,9 @@
 /* ── Frame ───────────────────────────────────────── */
 .qbikk .page {
   position: relative;
-  height: 100svh;
+  height: 100%;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   justify-items: center;
 }
 .qbikk .cube {
@@ -94,10 +96,11 @@
 }
 
 .qbikk header {
+  /* the studio header owns navigation; the exhibit keeps only its cube and preview dock */
   position: relative;
   z-index: 3;
   width: 100%;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   padding: 24px clamp(20px, 3.2vw, 44px);
@@ -175,7 +178,7 @@
   position: relative;
   z-index: 2;
   text-align: center;
-  padding: clamp(0px, 1.5vh, 20px) 20px 0;
+  padding: clamp(24px, 4vh, 48px) 20px 0;
 }
 .qbikk .slogan {
   margin-top: 14px;
@@ -431,8 +434,7 @@
 }
 @media (max-height: 620px) {
   .qbikk .page {
-    height: auto;
-    min-height: 620px;
+    min-height: 560px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

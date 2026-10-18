@@ -10,16 +10,21 @@
   --f-ui: var(--font-gothic), "Helvetica Neue", Arial, sans-serif;
   --f-title: var(--font-caslon), "Big Caslon", Georgia, serif;
 
-  --t-xs: 11px;
-  --t-s: 12px;
-  --t-m: 14px;
+  /* type scales with the viewport (12.25px / 14.3px at 1470 wide), floored for small screens */
+  --t-xs: max(10px, 0.764vw);
+  --t-s: max(11px, 0.833vw);
+  --t-m: max(12.5px, 0.972vw);
   --t-body: 16px;
   --t-l: 24px;
 
+  /* six-column grid; the image column spans the middle two */
   --gutter: 20px;
   --header-h: 76px;
-  --column-w: 30vw;
-  --gap: 20px;
+  --gap: 22px;
+  --col: calc((100vw - 2 * var(--gutter) - 5 * var(--gap)) / 6);
+  --step: calc(var(--col) + var(--gap));
+  --column-w: calc(2 * var(--col) + var(--gap));
+  --column-gap: 10vw;
 
   --ease: cubic-bezier(0.645, 0.045, 0.355, 1);
   --d-fast: 300ms;
@@ -42,6 +47,7 @@
     --gutter: 16px;
     --header-h: 56px;
     --column-w: 70vw;
+    --column-gap: 24vw;
   }
 }
 /* the two recurring text styles */
@@ -57,6 +63,7 @@
   font-size: var(--t-m);
   font-weight: 400;
   line-height: 1.2;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   text-transform: uppercase;
+  font-variant-numeric: oldstyle-nums;
 }

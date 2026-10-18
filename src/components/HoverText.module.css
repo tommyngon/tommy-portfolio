@@ -1,0 +1,68 @@
+/* Per-letter hover translation for proportional fonts, with the same roll as the landing
+   sheet (.ht-cell in globals.css): the English letter rolls up and blurs out while the
+   Norwegian rolls in from below. Each segment keeps its English in the text flow and lays
+   its Norwegian over it at natural spacing, so neither language is squeezed and nothing
+   reflows. */
+.root {
+  /* inherit everything: font, size, case, colour */
+}
+.seg {
+  position: relative;
+  white-space: nowrap;
+}
+.noLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.cell {
+  display: inline-block;
+  overflow-y: clip;
+  overflow-x: visible;
+  /* headroom so accents (ø, å) and descenders aren't cut, without touching the line box */
+  overflow-clip-margin: 0.18em;
+  /* the cells of the hero caption sit under a pointer-events:none layer */
+  pointer-events: auto;
+  cursor: default;
+}
+.noLayer .cell {
+  pointer-events: none;
+}
+.en,
+.no {
+  display: inline-block;
+  transition:
+    transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 320ms ease,
+    filter 420ms ease;
+}
+.no {
+  transform: translateY(95%);
+  opacity: 0;
+  filter: blur(2px);
+}
+.cell[data-flipped] .en {
+  transform: translateY(-95%);
+  opacity: 0;
+  filter: blur(2px);
+}
+.cell[data-flipped] .no {
+  transform: none;
+  opacity: 1;
+  filter: none;
+}
+/* flipping back is slower and softer than flipping over, so a sweep leaves a fading trail */
+.cell:not([data-flipped]) .en,
+.cell:not([data-flipped]) .no {
+  transition-duration: 700ms, 520ms, 700ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .en,
+  .no,
+  .cell[data-flipped] .en {
+    transform: none !important;
+    filter: none !important;
+  }
+}

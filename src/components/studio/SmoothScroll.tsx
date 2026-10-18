@@ -22,7 +22,8 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     };
     const start = () => {
       if (lenisRef.current || mq.matches) return;
-      const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 1 });
+      // same settle as the reference, and 1.4x travel per wheel notch (measured side by side)
+      const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 1.4 });
       lenisRef.current = lenis;
       if (locked) lenis.stop();
       const tick = (t: number) => {

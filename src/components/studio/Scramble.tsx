@@ -1,16 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import HoverText from "../HoverText";
 import { playSound } from "./sound";
 import styles from "./sections.module.css";
 
-const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/+-*#";
-const DURATION = 900;
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const DURATION = 1300;
 
 // Text that resolves left-to-right from random glyphs. Starts after the studio intro
 // (same trigger as RevealLines) and once scrolled into view.
-export default function Scramble({ text, className, delay = 0 }: { text: string; className?: string; delay?: number }) {
+export default function Scramble({ text, no, className, delay = 0 }: { text: string; no?: string; className?: string; delay?: number }) {
   const [shown, setShown] = useState<string | null>(null);
   const [armed, setArmed] = useState(false);
+  const [done, setDone] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -23,18 +25,30 @@ export default function Scramble({ text, className, delay = 0 }: { text: string;
     let raf = 0;
     const timers: number[] = [];
 
+    // Each letter first appears as a random capital (so the line grows from the left),
+    // keeps flickering, then settles on its real letter, also from the left.
     const run = () => {
       const t0 = performance.now();
+      const n = Math.max(1, text.length);
       let lastTick = 0;
+      let lastSwap = -1e9;
+      let noise = "";
       const frame = (now: number) => {
         const p = Math.min(1, (now - t0) / DURATION);
-        const done = Math.floor(p * text.length);
+        if (now - lastSwap > 70) {
+          lastSwap = now;
+          noise = Array.from(text, () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)]).join("");
+        }
         let out = "";
         for (let i = 0; i < text.length; i++) {
           const c = text[i];
-          out += i < done || c === " " ? c : GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+          const appear = (i / n) * 0.4;
+          const settle = 0.3 + (i / n) * 0.7;
+          if (p < appear) break;
+          out += p >= settle || c === " " ? c : noise[i];
         }
         setShown(p >= 1 ? text : out);
+        if (p >= 1) setDone(true);
         if (p < 1) {
           if (now - lastTick > 120) {
             lastTick = now;
@@ -58,7 +72,7 @@ export default function Scramble({ text, className, delay = 0 }: { text: string;
     };
 
     if (reduce) {
-      timers.push(window.setTimeout(() => setArmed(true), 0));
+      timers.push(window.setTimeout(() => { setArmed(true); setDone(true); }, 0));
       return () => timers.forEach((t) => window.clearTimeout(t));
     }
     const onDone = () => {
@@ -95,7 +109,7 @@ export default function Scramble({ text, className, delay = 0 }: { text: string;
 
   return (
     <span ref={ref} className={`${styles.scramble} ${armed ? styles.scrambleOn : ""} ${className ?? ""}`} aria-label={text} role="text">
-      <span aria-hidden="true">{shown ?? text}</span>
+      {no && done ? <HoverText en={text} no={no} /> : <span aria-hidden="true">{shown ?? text}</span>}
     </span>
   );
 }

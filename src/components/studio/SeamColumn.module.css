@@ -1,0 +1,43 @@
+/* The image column: one object per row, cropped to 4:5, a quiet gap between. */
+.column {
+  width: var(--column-w);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--column-gap);
+}
+.item {
+  display: block;
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+.item:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
+}
+.img {
+  object-fit: cover;
+}
+.canvas {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+.caption {
+  position: fixed;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  z-index: 2;
+  margin: 0;
+  opacity: 0;
+  transition: opacity 500ms var(--ease);
+  pointer-events: none;
+}
+.caption[data-on] {
+  opacity: 1;
+}

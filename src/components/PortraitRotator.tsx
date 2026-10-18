@@ -73,7 +73,8 @@ export default function PortraitRotator() {
           const idx = ((Math.round(a.to / 90) % 4) + 4) % 4;
           setAnnouncement(labels[idx]);
         }
-      } else if (!reduced.current) {
+      } else if (!reduced.current && document.documentElement.dataset.intro !== "running") {
+        // hold the front face while the studio intro lands its card on it
         theta.current += SPIN_DEG_PER_S * dt;
       }
       render();

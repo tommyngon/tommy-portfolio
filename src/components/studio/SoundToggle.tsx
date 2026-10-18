@@ -1,5 +1,6 @@
 "use client";
 import { useSyncExternalStore } from "react";
+import HoverTranslate from "../HoverTranslate";
 import { isSoundEnabled, setSoundEnabled, subscribeSound } from "./sound";
 
 export default function SoundToggle({ className }: { className?: string }) {
@@ -12,7 +13,7 @@ export default function SoundToggle({ className }: { className?: string }) {
       aria-label={on ? "Mute sound" : "Enable sound"}
       onClick={() => setSoundEnabled(!on)}
     >
-      <span className="ui-caps">SOUND</span> <span className="ui-caps">{on ? "ON" : "OFF"}</span>
+      <HoverTranslate en="sound" no="lyd" align="start" /> <HoverTranslate en={on ? "on" : "off"} no={on ? "på" : "av"} align="start" />
     </button>
   );
 }

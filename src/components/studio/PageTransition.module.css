@@ -1,0 +1,73 @@
+/* About transition "aperture": ink crosshair, a paper circle that closes over the page,
+   then a ring that opens from the centre. Paper + ink only. */
+@property --r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: -2px;
+}
+.aperture {
+  position: fixed;
+  inset: 0;
+  z-index: 8002;
+  pointer-events: none;
+  visibility: hidden;
+  overflow: hidden;
+}
+.aperture[data-on] {
+  visibility: visible;
+  pointer-events: auto;
+}
+.cover {
+  position: absolute;
+  inset: 0;
+  background: #f1eee9;
+  clip-path: circle(0px at 50% 50%);
+  --r: -2px;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent var(--r), #000 calc(var(--r) + 1.5px));
+  mask-image: radial-gradient(circle at 50% 50%, transparent var(--r), #000 calc(var(--r) + 1.5px));
+  will-change: clip-path;
+}
+.line {
+  position: absolute;
+  background: #111;
+  will-change: transform;
+}
+.lineH {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+}
+.lineV {
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+.labels {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  color: rgba(17, 17, 17, 0.55);
+  font-variant-ligatures: none;
+}
+.labelTop,
+.labelBottom {
+  position: absolute;
+  left: calc(50% + 10px);
+}
+.labelTop {
+  top: 14px;
+}
+.labelBottom {
+  bottom: 14px;
+}
+@media (max-width: 640px) {
+  .labels {
+    display: none;
+  }
+}

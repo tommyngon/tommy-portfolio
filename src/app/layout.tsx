@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/launch";
 import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -22,7 +23,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tommy-portfolio.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: "Tommy Ngo Nguyen",
   description:
     "Tommy Ngo Nguyen. Where design, product and clothing meet.",

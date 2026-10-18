@@ -12,6 +12,11 @@
   cursor: pointer;
 }
 
+.trigger:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+}
+
 .mark {
   display: inline-block;
   margin-left: 6px;
@@ -26,35 +31,55 @@
 .panel {
   position: absolute;
   left: 50%;
-  top: calc(100% + 12px);
+  top: calc(100% + 10px);
   transform: translateX(-50%);
-  width: 330px;
+  width: min(400px, calc(100vw - 32px));
   z-index: 30;
-  padding: 10px 0;
-  background: #f1eee9;
-  border-block: 1px solid #111;
-  clip-path: inset(0 0 100% 0);
+  isolation: isolate; /* keeps the ::after curtain behind the ellipses */
+  padding: 6px 0 14px;
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+  /* the curtain spans the full screen width (see ::after), so the clip reaches past the panel */
+  clip-path: inset(0 -100vw 100% -100vw);
   visibility: hidden;
   transition:
-    clip-path 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    visibility 0s linear 320ms;
+    clip-path 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 250ms;
 }
 
-/* invisible bridge over the 12px gap */
+/* the curtain: landing paper (with the same faint grain) across the whole width, its lower
+   edge softened so it reads as a drawn blind rather than a box */
+.panel::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 12px; /* starts below the two-line corner labels */
+  bottom: -28px;
+  left: calc(50% - 50vw);
+  width: 100vw;
+  background-color: #f1eee9;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  pointer-events: none;
+}
+
+/* invisible bridge over the gap between trigger and panel */
 .panel::before {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  top: -13px;
-  height: 13px;
+  top: -12px;
+  height: 12px;
 }
 
 .wrap[data-open] .panel {
-  clip-path: inset(0 0 0 0);
+  clip-path: inset(0 -100vw 0 -100vw);
   visibility: visible;
   transition:
-    clip-path 460ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    clip-path 500ms cubic-bezier(0.2, 0.8, 0.2, 1),
     visibility 0s;
 }
 
@@ -66,67 +91,369 @@
 
 .item {
   position: relative;
-  opacity: 0;
-  transform: translateY(-4px);
 }
 
-.wrap[data-open] .item {
-  opacity: 1;
-  transform: none;
-  transition:
-    opacity 300ms ease calc(80ms + var(--i) * 50ms),
-    transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1) calc(80ms + var(--i) * 50ms);
-}
-
-.item + .item::before {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  top: 0;
-  border-top: 1px dotted rgba(17, 17, 17, 0.18);
+/* each ellipse overlaps the next by ~30% of its height */
+.item + .item {
+  margin-top: -13.5%;
 }
 
 .row {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  gap: 10px;
-  padding: 9px 14px;
-  font-size: 11px;
-  line-height: 1.3;
+  position: relative;
+  display: block;
+  aspect-ratio: 400 / 190;
   color: #111;
   text-decoration: none;
 }
 
-.num,
-.kind {
-  color: #8a837a;
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ring {
+  fill: none;
+  stroke: #111;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition:
+    stroke-dashoffset 250ms ease,
+    stroke-width 200ms ease;
+}
+
+.wrap[data-open] .ring {
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset 900ms cubic-bezier(0.2, 0.8, 0.2, 1) calc(250ms + var(--i, 0) * 80ms),
+    stroke-width 200ms ease;
+}
+
+.row:hover .ring,
+.row:focus-visible .ring {
+  stroke-width: 1.5px;
+}
+
+.row:focus-visible {
+  outline: 1px solid #111;
+  outline-offset: -2px;
+}
+
+.num {
+  position: absolute;
+  left: 8%;
+  top: 56%;
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  color: #111;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.text {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 50%;
+  transform: translateY(-62%) rotate(-3deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.wrap[data-open] .num,
+.wrap[data-open] .text {
+  opacity: 1;
+  transition: opacity 400ms ease calc(450ms + var(--i, 0) * 80ms);
 }
 
 .label {
-  justify-self: start;
-  background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0 1px;
-  transition:
-    background-size 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  font-size: 13px;
+  line-height: 1.3;
+  color: #111;
 }
 
-.row:hover .label,
-.row:focus-visible .label {
-  background-size: 100% 1px;
-  transform: translateX(3px);
+.kind {
+  font-size: 11px;
+  line-height: 1.3;
+  color: #8a837a;
+  transition: color 200ms ease;
+}
+
+.row:hover .kind,
+.row:focus-visible .kind {
+  color: #111;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .panel,
   .wrap[data-open] .panel,
-  .wrap[data-open] .item,
-  .mark,
-  .label {
+  .ring,
+  .wrap[data-open] .ring,
+  .num,
+  .text,
+  .wrap[data-open] .num,
+  .wrap[data-open] .text,
+  .mark {
     transition: none;
   }
-  .item {
+  .ring {
+    stroke-dashoffset: 0;
+  }
+  .num,
+  .text {
     opacity: 1;
+  }
+}
+
+/* ---------- orbit variant: a line drawing of nested orbits; each project sits on a dot ---------- */
+.orbitPanel {
+  width: min(620px, calc(100vw - 32px));
+  padding: 14px 0 26px;
+}
+.orbit {
+  position: relative;
+  aspect-ratio: 920 / 470;
+}
+.orbitSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* near side: solid hairlines that draw themselves in, one after another */
+.line {
+  fill: none;
+  stroke: #111;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 250ms ease;
+}
+.wrap[data-open] .line {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1100ms cubic-bezier(0.6, 0.05, 0.2, 1) calc(200ms + var(--i, 0) * 110ms);
+}
+/* far side: dashed, fades in once the shell is drawn, then drifts slowly round its orbit */
+.dash {
+  fill: none;
+  stroke: #111;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 4 4;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.wrap[data-open] .dash {
+  opacity: 0.85;
+  transition: opacity 700ms ease 650ms;
+  animation: drift 6s linear infinite;
+}
+@keyframes drift {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+.orbitList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.node {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.nodeLink {
+  position: absolute;
+  inset: 0;
+  color: #111;
+  text-decoration: none;
+  outline: none;
+}
+.dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: #111;
+  transform: scale(0);
+  transition: transform 200ms ease;
+}
+.wrap[data-open] .dot {
+  transform: scale(1);
+  transition: transform 520ms cubic-bezier(0.3, 1.6, 0.4, 1) calc(900ms + var(--i, 0) * 120ms);
+}
+.wrap[data-open] .centre {
+  transition-delay: 760ms;
+}
+.nodeLabel {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--font-caslon), "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0.005em;
+  text-transform: lowercase;
+  opacity: 0;
+  filter: blur(3px);
+  transition:
+    opacity 150ms ease,
+    filter 150ms ease,
+    color 250ms ease;
+}
+.wrap[data-open] .nodeLabel {
+  opacity: 1;
+  filter: none;
+  transition:
+    opacity 600ms ease calc(1000ms + var(--i, 0) * 120ms),
+    filter 600ms ease calc(1000ms + var(--i, 0) * 120ms),
+    color 250ms ease;
+}
+.nodeNum {
+  font-size: 0.8em;
+  vertical-align: 0.12em;
+  margin-right: 1px;
+}
+.node[data-side="left"] .nodeLabel {
+  right: 14px;
+  top: 0;
+  transform: translateY(-50%);
+}
+.node:first-child .nodeLabel {
+  /* upper left: the label sits up and away from the dot, like a caption on a diagram */
+  top: auto;
+  bottom: 4px;
+  transform: none;
+}
+.node[data-side="right"] .nodeLabel {
+  left: 14px;
+  top: 0;
+  transform: translateY(-50%);
+}
+.node[data-side="below"] .nodeLabel {
+  left: 2px;
+  top: 14px;
+}
+/* hover: the chosen dot swells, the other labels step back */
+.nodeLink:hover .dot,
+.nodeLink:focus-visible .dot {
+  transform: scale(1.6);
+  transition: transform 300ms cubic-bezier(0.3, 1.6, 0.4, 1);
+}
+.orbitList:has(.nodeLink:hover, .nodeLink:focus-visible) .nodeLink:not(:hover, :focus-visible) .nodeLabel {
+  color: #a19a90;
+}
+.nodeLink:focus-visible .nodeLabel {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .nodeLabel {
+    font-size: 12px;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    margin: -3.5px 0 0 -3.5px;
+  }
+  /* no room on the right on a phone: those labels hang below and to the left instead */
+  .node[data-side="right"] .nodeLabel,
+  .node[data-side="below"] .nodeLabel {
+    left: auto;
+    right: 6px;
+    top: 9px;
     transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line,
+  .wrap[data-open] .line,
+  .dash,
+  .wrap[data-open] .dash,
+  .dot,
+  .wrap[data-open] .dot,
+  .nodeLabel,
+  .wrap[data-open] .nodeLabel {
+    transition: none;
+    animation: none;
+  }
+  .line {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* the orbit's curtain ends just below the drawing; the portrait it would cut in half steps
+   out of the way while the overview is open */
+.orbitPanel::after {
+  bottom: -36px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+}
+:global(.sheet-portrait) {
+  transition: opacity 400ms ease 150ms;
+}
+:global(.sheet-bar):has(.wrap[data-open] .orbitPanel) ~ :global(.sheet-portrait) {
+  opacity: 0;
+  transition-delay: 0ms;
+}
+.wrap[data-open] .orbitPanel {
+  clip-path: inset(0 -100vw -100svh -100vw);
+}
+@media (max-width: 640px) {
+  /* leave room for the left-hand label at the screen edge */
+  .orbit {
+    margin: 0 4% 0 14%;
+  }
+  /* on a phone the labels have to cross the lines: give them a scrap of paper to sit on */
+  .nodeLabel {
+    padding: 1px 3px;
+    background: #f1eee9;
+  }
+}
+
+/* "in progress", centred under the drawing; it arrives after the labels */
+.progress {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  translate: -50% 0;
+  margin: 0;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #8a837a;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.wrap[data-open] .progress {
+  opacity: 1;
+  transition: opacity 600ms ease 1500ms;
+}
+@media (max-width: 640px) {
+  .progress {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress,
+  .wrap[data-open] .progress {
+    transition: none;
   }
 }

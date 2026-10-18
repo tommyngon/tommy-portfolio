@@ -18,52 +18,81 @@
 .scrambleOn { opacity: 1; }
 
 /* /work */
-.page { position: relative; }
+.page { position: relative; padding-top: 33svh; } /* the serif block enters exactly where it then holds */
+/* The serif block holds still at a third of the screen for as long as the collection is
+   on screen (sticky, zero height, so it never pushes the column); the objects pass over it. */
 .hero {
-  position: fixed;
-  z-index: 2;
-  left: 50%;
-  top: 34svh;
-  width: calc(var(--column-w) * 1.45);
-  margin-left: calc(var(--column-w) * -0.5);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-  row-gap: 4px;
+  position: sticky;
+  z-index: 0;
+  top: 33svh;
+  height: 0;
+  margin-left: calc(var(--gutter) + 2 * var(--step));
+  width: var(--column-w);
+  overflow: visible;
   pointer-events: none;
 }
-.heroL { grid-column: 1; }
-.heroR { grid-column: 2; margin-top: 2.6em; }
-.heroB { grid-column: 1 / -1; margin-top: 0.6em; }
-.spacer { height: 62svh; }
+.heroRow {
+  display: block;
+  position: relative;
+  white-space: nowrap;
+}
+.tab1 {
+  position: absolute;
+  left: 27.7%;
+}
+.tab2 {
+  padding-left: 61%;
+}
+.spacer { height: 29svh; } /* first object starts just below the serif block */
 .column { width: var(--column-w); margin: 0 auto; }
 .tail { height: 24svh; }
-.index {
-  position: fixed;
+/* end of the collection: index bottom-left, the hovered object on the right, footer on the grid */
+.end {
+  position: relative;
   z-index: 2;
+  height: 100svh;
+}
+.index {
+  position: absolute;
   left: var(--gutter);
-  bottom: var(--gutter);
-  width: min(32vw, 420px);
+  top: 62svh;
+  width: calc(2 * var(--col) + var(--gap));
   display: flex;
   flex-wrap: wrap;
-  gap: 0 8px;
+  gap: 0 0.5em;
+  font-size: var(--t-s);
 }
-.index a { color: var(--c-muted); text-decoration: none; transition: color var(--d-base) var(--ease); }
-.index a:hover,
+.index a { color: #c4c0ba; text-decoration: none; transition: color 120ms linear; }
+.index a[aria-current="true"],
 .index a:focus-visible { color: var(--c-ink); outline: none; }
 .index a:focus-visible { text-decoration: underline; }
+.endFigure {
+  position: absolute;
+  right: var(--gutter);
+  top: 30svh;
+  width: calc(var(--col) * 1.3);
+  aspect-ratio: 4 / 5;
+  margin: 0;
+}
+.endImg { object-fit: cover; opacity: 0; }
+.endImg[data-on] { opacity: 1; }
 .footer {
   position: relative;
   z-index: 3;
-  background: var(--c-paper);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 24px;
-  justify-content: space-between;
-  padding: 40px var(--gutter) 28px;
-  font-size: var(--t-s);
-  line-height: 1.5;
+  display: grid;
+  grid-template-columns: repeat(6, var(--col));
+  column-gap: var(--gap);
+  padding: 0 var(--gutter) 28px;
+  margin-top: -18svh;
+  background: var(--c-paper); /* covers the fixed hero once the page runs past the end */
+  font-size: var(--t-xs);
+  font-weight: 500;
+  line-height: 1.3;
 }
+.footer p { margin: 0; }
+.footA { grid-column: 3; }
+.footB { grid-column: 4; }
+.footC { grid-column: 5 / span 2; justify-self: end; width: calc(var(--col) * 1.3); }
 .footer a { color: inherit; text-decoration: none; }
 .footer a:hover,
 .footer a:focus-visible { text-decoration: underline; }
@@ -95,13 +124,19 @@
 @media (max-width: 640px) {
   .hero {
     position: static;
+    height: auto;
     width: auto;
-    margin: calc(var(--header-h) + 8svh) var(--gutter) 0;
-    display: block;
+    margin: calc(var(--header-h) + 16svh) var(--gutter) 0;
   }
-  .heroR, .heroB { margin-top: 0.8em; }
-  .spacer { height: 8svh; }
-  .index { position: static; width: auto; margin: 10svh var(--gutter) 0; }
+  .tab1 { left: 40%; }
+  .tab2 { padding-left: 40%; }
+  .page { padding-top: 0; }
+  .spacer { height: 14svh; }
+  .end { height: auto; padding: 12svh var(--gutter) 6svh; display: flex; flex-direction: column-reverse; gap: 6svh; }
+  .index { position: static; width: auto; }
+  .endFigure { position: relative; right: auto; top: auto; width: 70vw; align-self: center; }
+  .footer { display: flex; flex-direction: column; gap: 12px; margin-top: 0; }
+  .footC { justify-self: auto; width: auto; }
   .tail { height: 10svh; }
   .aboutHero { margin-top: calc(var(--header-h) + 8svh); }
 }

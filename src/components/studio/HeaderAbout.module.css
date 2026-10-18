@@ -1,0 +1,90 @@
+/* /about header variant: HOME and ABOUT sit on grid columns 4 and 5, CONTACT on the right edge. */
+.home,
+.here,
+.contact {
+  position: absolute;
+  top: 18px;
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+.home {
+  left: calc(var(--gutter) + 3 * var(--step));
+}
+.here {
+  left: calc(var(--gutter) + 4 * var(--step));
+  transition-delay: 100ms;
+}
+.contact {
+  right: var(--gutter);
+  transition-delay: 180ms;
+}
+:global(html[data-intro="running"]) .home,
+:global(html[data-intro="running"]) .here,
+:global(html[data-intro="running"]) .contact {
+  transform: translateY(-260%);
+  transition: none;
+}
+.bar {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: max(11px, 0.75vw);
+  font-weight: 400;
+  line-height: 1.35;
+  text-transform: lowercase;
+  letter-spacing: 0;
+}
+.bar .contact {
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+.current {
+  display: block;
+  outline: none;
+  cursor: default;
+}
+.note {
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  white-space: nowrap;
+  color: var(--c-muted);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 300ms var(--ease), transform 300ms var(--ease);
+  pointer-events: none;
+  user-select: none;
+}
+.here:hover .note,
+.here:focus-within .note {
+  opacity: 1;
+  transform: translateY(0);
+}
+.here {
+  pointer-events: auto;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .home,
+  .here,
+  .contact {
+    top: 12px;
+  }
+  .home {
+    left: var(--gutter);
+  }
+  .here {
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+  :global(html[data-intro="running"]) .here {
+    transform: translateX(-50%) translateY(-260%);
+  }
+}
+/* buttons in the home header bar take the bar's mono type without moving anywhere */
+.plain {
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+}

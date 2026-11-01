@@ -37,6 +37,20 @@ const NO: Record<string, string> = {
   Ongoing: "Pågående",
   "Clothing and products": "Klær og produkter",
   Application: "Applikasjon",
+  Lessons: "Leksjoner",
+  Modes: "Moduser",
+  "Tetris skill trainer": "Tetris-ferdighetstrener",
+  "20 lessons in 4 tiers, 208 validated scenarios": "20 leksjoner i 4 nivåer, 208 validerte scenarioer",
+  "Watch, Guided, Practice, Challenge and Free Play with an engine coach":
+    "Se, Veiledet, Øv, Utfordring og fritt spill med en motor-coach",
+  "Vanilla JavaScript on a canvas — no framework, with its own SRS engine":
+    "Ren JavaScript på et canvas — uten rammeverk, med egen SRS-motor",
+  "React and TypeScript, installable as an app": "React og TypeScript, kan installeres som app",
+  "Training logger": "Treningslogg",
+  "A browser Tetris skill trainer: pick a skill, see the target placement and exact keys, practice it, and get an explanation of why.":
+    "En Tetris-trener i nettleseren: velg en ferdighet, se målplasseringen og de nøyaktige tastene, øv på den, og få forklart hvorfor.",
+  "A strength-training logger: pick a body part, roll the dials, log the set, and follow your progress over time.":
+    "En logg for styrketrening: velg en kroppsdel, rull hjulene, logg settet, og følg fremgangen over tid.",
   "A pocket-sized AI secretary — your perfect memory.": "En lommestor KI-sekretær — ditt perfekte minne.",
   "An onboarding site for the staff of a knife store: a daily knife, three learning paths, a progress board.":
     "Et opplæringsområde for de ansatte i en knivbutikk: en daglig kniv, tre læringsløp og en fremdriftstavle.",

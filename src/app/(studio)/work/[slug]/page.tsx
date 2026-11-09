@@ -59,7 +59,6 @@ const NO: Record<string, string> = {
   "Sewn by Tommy Ngo Nguyen in Trondheim, Norway": "Sydd av Tommy Ngo Nguyen i Trondheim, Norge",
   "Tommy Ngo Nguyen, Trondheim, Norway": "Tommy Ngo Nguyen, Trondheim, Norge",
   "← Back": "← Tilbake",
-  "Open the catalogue →": "Åpne katalogen →",
   "Next project →": "Neste prosjekt →",
 };
 
@@ -119,11 +118,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 </a>
               ) : (
                 <p><T en={project.outcome} /></p>
-              )}
-              {slug === "artefakt-archive" && (
-                <Link href="/uniform" className={styles.link}>
-                  <T en="Open the catalogue →" />
-                </Link>
               )}
               <p className={styles.credit}><T en={project.credit} /></p>
             </div>

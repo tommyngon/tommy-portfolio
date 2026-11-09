@@ -2,7 +2,7 @@
 // images live in /public/work/ (prepared by the asset step).
 
 export type WorkImage = { src: string; alt: string };
-export type LiveKind = "orb" | "keys";
+export type LiveKind = "orb" | "keys" | "dial";
 
 export type Project = {
   slug: string;
@@ -93,7 +93,7 @@ export const PROJECTS: Project[] = [
     outcome: "staerk.vercel.app",
     credit: "Tommy Ngo Nguyen, Trondheim, Norway",
     link: { label: "Visit the site", href: "https://staerk.vercel.app" },
-    cover: { src: "/work/staerk-sheet.webp", alt: "Staerk: the wordmark in ink over white embossed paper with a loading spinner" },
+    cover: { src: "/work/staerk-dial-sheet.webp", alt: "Staerk: the wordmark in white inside the app's tick dial, on black", live: "dial", mark: "/work/staerk-mark.webp" },
     images: [
       { src: "/work/staerk-1.webp", alt: "Staerk: opening screen with the wordmark on silver foil" },
       { src: "/work/staerk-2.webp", alt: "Staerk: logging a set with the reps and weight dials" },
@@ -126,7 +126,7 @@ export const PROJECTS: Project[] = [
     specs: [{ label: "Type", value: "Application" }],
     outcome: "More soon.",
     credit: "Tommy Ngo Nguyen, Trondheim, Norway",
-    cover: { src: "/work/huskelappen-sheet.webp", alt: "Huskelappen: the app icon and name" },
+    cover: { src: "/work/huskelappen-cards-sheet.webp", alt: "Huskelappen: a stack of translucent cards above the name" },
   },
 ];
 

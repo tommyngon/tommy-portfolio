@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
-// same check as LANDING_ONLY in src/lib/launch.ts: the live site is the landing sheet alone
-const landingOnly = process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_FULL_SITE !== "1";
+// same switch as LANDING_ONLY in src/lib/launch.ts: true hides everything but the landing sheet
+const landingOnly: boolean = false;
 
 const nextConfig: NextConfig = {
   // keep the dev badge off the canvas; build and runtime errors still surface

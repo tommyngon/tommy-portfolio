@@ -1,8 +1,6 @@
-// The live site is a single page for now: only the landing sheet. The full studio (the
-// collection, /work, /about, /uniform) keeps growing in development, where everything shows.
-// To ship it, set NEXT_PUBLIC_FULL_SITE=1 in the deployment's environment (or drop this flag).
-// next.config.ts repeats this check for its redirects.
-export const LANDING_ONLY =
-  process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_FULL_SITE !== "1";
+// The full studio (the collection, /work, /about, /uniform) is live. Set this to true to cut
+// the live site back to the landing sheet alone.
+// next.config.ts repeats this switch for its redirects.
+export const LANDING_ONLY: boolean = false;
 
 export const SITE_URL = "https://tommynguyen.no";

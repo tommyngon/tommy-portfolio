@@ -93,7 +93,7 @@ export const PROJECTS: Project[] = [
     outcome: "staerk.vercel.app",
     credit: "Tommy Ngo Nguyen, Trondheim, Norway",
     link: { label: "Visit the site", href: "https://staerk.vercel.app" },
-    cover: { src: "/work/staerk-sheet.webp", alt: "Staerk: the wordmark over the app's grey texture and tick dial" },
+    cover: { src: "/work/staerk-sheet.webp", alt: "Staerk: the wordmark in ink over white embossed paper with a loading spinner" },
     images: [
       { src: "/work/staerk-1.webp", alt: "Staerk: opening screen with the wordmark on silver foil" },
       { src: "/work/staerk-2.webp", alt: "Staerk: logging a set with the reps and weight dials" },

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import HoverText from "@/components/HoverText";
-import QbikkSection from "@/components/qbikk/QbikkSection";
 import SeamColumn from "@/components/studio/SeamColumn";
 import { PROJECTS, getProject } from "@/lib/work";
 import styles from "./project.module.css";
@@ -19,8 +17,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: `${project.title} — Tommy Ngo Nguyen`, description: project.summary };
 }
 
-// A contained, calm "exhibit" below the images. Only QBIKK's live preview and the
-// Tomatosharp front-page screenshot are shown; artefakt archive points to its catalogue instead.
 const NO: Record<string, string> = {
   Role: "Rolle",
   Started: "Startet",
@@ -62,8 +58,6 @@ const NO: Record<string, string> = {
   "Built for Tomatosharp": "Laget for Tomatosharp",
   "Sewn by Tommy Ngo Nguyen in Trondheim, Norway": "Sydd av Tommy Ngo Nguyen i Trondheim, Norge",
   "Tommy Ngo Nguyen, Trondheim, Norway": "Tommy Ngo Nguyen, Trondheim, Norge",
-  "Live preview": "Live-visning",
-  "The front page": "Forsiden",
   "← Back": "← Tilbake",
   "Open the catalogue →": "Åpne katalogen →",
   "Next project →": "Neste prosjekt →",
@@ -74,42 +68,6 @@ function T({ en, as }: { en: string; as?: "p" }) {
   return NO[en] ? <HoverText en={en} no={NO[en]} as={as} /> : <>{en}</>;
 }
 
-function Exhibit({ slug }: { slug: string }) {
-  if (slug === "qbikk") {
-    return (
-      <section className={styles.exhibit} aria-label="QBIKK live preview">
-        <p className={`ui-caps ${styles.exhibitLabel}`}><T en="Live preview" /></p>
-        <div className={`${styles.frame} ${styles.frameTall}`}>
-          <QbikkSection />
-        </div>
-      </section>
-    );
-  }
-  if (slug === "tomatosharp-academy") {
-    return (
-      <section className={styles.exhibit} aria-label="Tomatosharp Academy front page">
-        <p className={`ui-caps ${styles.exhibitLabel}`}><T en="The front page" /></p>
-        <a
-          className={styles.frame}
-          href="https://tomatosharp-academy.vercel.app/"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open Tomatosharp Academy"
-        >
-          <Image
-            src="/tomatosharp/academy-front.webp"
-            alt="Tomatosharp Academy front page with the knife of the day and three learning levels"
-            fill
-            sizes="(max-width: 640px) 100vw, 100vw"
-            style={{ objectFit: "cover", objectPosition: "top" }}
-          />
-        </a>
-      </section>
-    );
-  }
-  return null;
-}
-
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const project = getProject(slug);
@@ -118,7 +76,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const index = PROJECTS.findIndex((p) => p.slug === slug);
   const next = PROJECTS[(index + 1) % PROJECTS.length];
   const href = project.link?.href ?? (slug === "artefakt-archive" ? "/uniform" : "/work");
-  const items = (project.images ?? []).map((img) => ({ ...img, href, caption: project.title }));
+  // only the sheet this project has on the home column, once; `images` stays in the data
+  const items = project.cover ? [{ ...project.cover, href, caption: project.title }] : [];
 
   return (
     <main id="main" className={styles.page}>
@@ -147,10 +106,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         )}
       </div>
 
-      <Exhibit slug={project.slug} />
-
       <div className={styles.end}>
-        {items.length === 0 ? (
+        {(project.images ?? []).length === 0 ? (
           <p className={`ui-caps ${styles.summary}`}><T en="More soon." /></p>
         ) : (
           <>

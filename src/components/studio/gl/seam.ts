@@ -2,8 +2,18 @@
 // A live source (e.g. the QBIKK orb) draws itself into its own canvas; the column re-uploads
 // that canvas every frame while the sheet is on screen. `el` stays as the static fallback.
 // `mark` is a transparent sheet-sized layer (the QBIKK wordmark) laid over a live source in white.
-export type LiveSource = { canvas: HTMLCanvasElement; render(timeSec: number): void; dispose(): void };
-export type SeamEntry = { el: HTMLImageElement; wrap: HTMLElement; live?: LiveSource; mark?: string };
+//
+// Everything expensive is kept off the frames that matter: images are decoded off the main
+// thread (createImageBitmap on the fetched bytes), at most one GPU upload runs per frame,
+// and the loop only runs while a sheet is near the viewport. `changed` lets a live source
+// say nothing moved, so this frame needs no redraw or re-upload.
+export type LiveSource = {
+  canvas: HTMLCanvasElement;
+  render(timeSec: number): void;
+  dispose(): void;
+  changed?(timeSec: number): boolean;
+};
+export type SeamEntry = { el: HTMLImageElement; wrap: HTMLElement; live?: () => LiveSource | null; mark?: string };
 
 const GRID = 32;
 
@@ -84,14 +94,28 @@ function compile(gl: WebGL2RenderingContext, type: number, src: string) {
 
 type Slot = {
   entry: SeamEntry;
+  source: LiveSource | null;
   tex: WebGLTexture | null;
   markTex: WebGLTexture | null;
   wanted: boolean;
+  near: boolean;
+  keepDom: boolean; // the sheet was already on screen when it was added: its DOM image stays until the canvas has faded in on top
   readyAt: number;
   lift: number;
   hover: boolean;
   onLoad?: () => void;
 };
+
+// Off-main-thread decode. Same bytes the <img> already fetched, so this is a cache hit.
+async function decodeBitmap(url: string): Promise<ImageBitmap | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await createImageBitmap(await res.blob(), { premultiplyAlpha: "none", colorSpaceConversion: "default" });
+  } catch {
+    return null;
+  }
+}
 
 export class SeamRenderer {
   private gl: WebGL2RenderingContext;
@@ -111,6 +135,9 @@ export class SeamRenderer {
   private vel = 0;
   private dpr = 1;
   private disposed = false;
+  private running = false;
+  private drew = false;
+  private uploads: (() => void)[] = [];
 
   static create(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: true });
@@ -169,10 +196,12 @@ export class SeamRenderer {
     this.io = new IntersectionObserver(
       (es) => {
         for (const e of es) {
-          if (!e.isIntersecting) continue;
           const s = this.slots.find((x) => x.entry.wrap === e.target);
-          if (s) this.request(s);
+          if (!s) continue;
+          s.near = e.isIntersecting;
+          if (e.isIntersecting) this.request(s);
         }
+        this.updateLoop();
       },
       { rootMargin: "100% 0px 100% 0px" },
     );
@@ -181,13 +210,31 @@ export class SeamRenderer {
     document.addEventListener("visibilitychange", this.onVis);
     this.lastY = window.scrollY;
     this.lastT = performance.now();
-    this.raf = requestAnimationFrame(this.frame);
+  }
+
+  // The loop and the canvas exist only while a sheet is within a screen of the viewport.
+  private updateLoop() {
+    const near = !document.hidden && this.slots.some((x) => x.near);
+    if (near && !this.running) {
+      this.running = true;
+      this.canvas.style.display = "block";
+      this.lastT = performance.now();
+      this.lastY = window.scrollY;
+      this.raf = requestAnimationFrame(this.frame);
+    } else if (!near && this.running) {
+      this.running = false;
+      cancelAnimationFrame(this.raf);
+      this.canvas.style.display = "none";
+    }
   }
 
   add(entry: SeamEntry) {
-    // Hide the DOM image from the start; the canvas fades it in when its texture is ready.
-    entry.el.style.opacity = "0";
-    this.slots.push({ entry, tex: null, markTex: null, wanted: false, readyAt: 0, lift: 0, hover: false });
+    // Off screen, hide the DOM image from the start; the canvas fades it in when its texture
+    // is ready. A sheet already in view keeps its DOM image until the canvas has faded in.
+    const r = entry.el.getBoundingClientRect();
+    const keepDom = r.bottom > 0 && r.top < window.innerHeight;
+    if (!keepDom) entry.el.style.opacity = "0";
+    this.slots.push({ entry, source: null, tex: null, markTex: null, wanted: false, near: false, keepDom, readyAt: 0, lift: 0, hover: false });
     entry.wrap.addEventListener("pointerenter", () => this.setHover(entry, true));
     entry.wrap.addEventListener("pointerleave", () => this.setHover(entry, false));
     this.io.observe(entry.wrap);
@@ -201,76 +248,110 @@ export class SeamRenderer {
   private request(s: Slot) {
     if (s.wanted) return;
     s.wanted = true;
-    const el = s.entry.el;
-    const live = s.entry.live;
-    if (s.entry.mark) {
-      const img = new Image();
-      img.onload = () => {
-        if (this.disposed) return;
-        const gl = this.gl;
-        const t = gl.createTexture()!;
-        gl.bindTexture(gl.TEXTURE_2D, t);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        s.markTex = t;
-      };
-      img.src = s.entry.mark;
-    }
-    if (live) {
-      const gl = this.gl;
-      const t = gl.createTexture()!;
-      gl.bindTexture(gl.TEXTURE_2D, t);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      live.render(performance.now() / 1000);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, live.canvas);
-      s.tex = t;
-      s.readyAt = performance.now();
+    if (s.entry.mark) void this.loadMark(s, s.entry.mark);
+    if (s.entry.live) {
+      this.uploads.push(() => this.prepareLive(s));
       return;
     }
-    const upload = () => {
-      if (this.disposed || !el.naturalWidth) return;
-      const gl = this.gl;
-      const t = gl.createTexture()!;
-      gl.bindTexture(gl.TEXTURE_2D, t);
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-      try {
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, el);
-      } catch {
-        gl.deleteTexture(t);
-        el.style.opacity = "";
-        return;
-      }
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      s.tex = t;
-      s.readyAt = performance.now();
-    };
-    if (el.complete && el.naturalWidth) upload();
+    this.requestStill(s);
+  }
+
+  private requestStill(s: Slot) {
+    const el = s.entry.el;
+    const begin = () => void this.loadStill(s);
+    if (el.complete && el.naturalWidth) begin();
     else {
-      s.onLoad = upload;
-      el.addEventListener("load", upload, { once: true });
+      s.onLoad = begin;
+      el.addEventListener("load", begin, { once: true });
       el.loading = "eager";
     }
   }
 
-  private onVis = () => {
-    if (document.hidden) cancelAnimationFrame(this.raf);
-    else if (!this.disposed) {
-      this.lastT = performance.now();
-      this.lastY = window.scrollY;
-      this.raf = requestAnimationFrame(this.frame);
+  private setTexParams() {
+    const gl = this.gl;
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
+  private async loadMark(s: Slot, src: string) {
+    const bitmap = await decodeBitmap(src);
+    if (this.disposed) {
+      bitmap?.close();
+      return;
     }
+    if (!bitmap) return;
+    this.uploads.push(() => {
+      const gl = this.gl;
+      const t = gl.createTexture()!;
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+      bitmap.close();
+      this.setTexParams();
+      s.markTex = t;
+    });
+  }
+
+  private async loadStill(s: Slot) {
+    const el = s.entry.el;
+    const bitmap = await decodeBitmap(el.currentSrc || el.src);
+    if (this.disposed) {
+      bitmap?.close();
+      return;
+    }
+    this.uploads.push(() => this.uploadStill(s, bitmap));
+  }
+
+  private uploadStill(s: Slot, bitmap: ImageBitmap | null) {
+    const gl = this.gl;
+    const el = s.entry.el;
+    const t = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    try {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap ?? el);
+    } catch {
+      gl.deleteTexture(t);
+      bitmap?.close();
+      el.style.opacity = "";
+      return;
+    }
+    bitmap?.close();
+    this.setTexParams();
+    s.tex = t;
+    s.readyAt = performance.now();
+  }
+
+  // Created on its own frame, then drawn and uploaded on the next, so the GL context and
+  // shader compile of a live source never share a frame with its first upload.
+  private prepareLive(s: Slot) {
+    const source = s.entry.live?.() ?? null;
+    if (!source) {
+      this.requestStill(s);
+      return;
+    }
+    s.source = source;
+    const gl = this.gl;
+    const t = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this.uploads.push(() => {
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      source.render(performance.now() / 1000);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source.canvas);
+      s.tex = t;
+      s.readyAt = performance.now();
+    });
+  }
+
+  private onVis = () => {
+    if (!this.disposed) this.updateLoop();
   };
 
   private resize = () => {
@@ -282,6 +363,7 @@ export class SeamRenderer {
   private frame = (now: number) => {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(this.frame);
+    this.uploads.shift()?.(); // at most one upload per frame
     const dt = Math.min((now - this.lastT) / 1000, 0.05) || 0.016;
     this.lastT = now;
     const y = window.scrollY;
@@ -298,9 +380,18 @@ export class SeamRenderer {
 
     const gl = this.gl;
     const vw = window.innerWidth, vh = window.innerHeight;
+    // nothing on screen and nothing left over from the last frame: no GL work at all
+    const inView = this.slots.map((s) => {
+      const r = s.entry.el.getBoundingClientRect();
+      return s.tex && !(r.bottom < -vh * 0.2 || r.top > vh * 1.2 || r.width < 1) ? r : null;
+    });
+    const hasWork = inView.some(Boolean);
+    if (!hasWork && !this.drew) return;
+    this.drew = hasWork;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    if (!hasWork) return;
     gl.useProgram(this.prog);
     gl.bindVertexArray(this.vao);
     gl.enable(gl.BLEND);
@@ -310,18 +401,22 @@ export class SeamRenderer {
     gl.uniform1f(this.loc.u_time, now / 1000);
     gl.uniform1i(this.loc.u_tex, 0);
     gl.uniform1i(this.loc.u_mark, 1);
-    for (const s of this.slots) {
-      if (!s.tex) continue;
-      const r = s.entry.el.getBoundingClientRect();
-      if (r.bottom < -vh * 0.2 || r.top > vh * 1.2 || r.width < 1) continue;
+    for (let i = 0; i < this.slots.length; i++) {
+      const s = this.slots[i];
+      const r = inView[i];
+      if (!r || !s.tex) continue;
       const t = Math.min(1, (now - s.readyAt) / 700);
+      if (t >= 1 && s.keepDom) {
+        s.keepDom = false;
+        s.entry.el.style.opacity = "0"; // the canvas has fully covered it
+      }
       const fade = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // ease in-out cubic, ~var(--ease)
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, s.markTex ?? this.noMark);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, s.tex);
-      const live = s.entry.live;
-      if (live) {
+      const live = s.source;
+      if (live && (!live.changed || live.changed(now / 1000))) {
         live.render(now / 1000);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, live.canvas);
       }
@@ -333,14 +428,16 @@ export class SeamRenderer {
       s.lift += ((s.hover ? 1 : 0) - s.lift) * Math.min(1, dt * 6);
       gl.uniform1f(this.loc.u_lift, s.lift);
       gl.uniform1f(this.loc.u_fade, fade);
-      gl.uniform1f(this.loc.u_seed, ((this.slots.indexOf(s) * 0.618034) % 1));
+      gl.uniform1f(this.loc.u_seed, ((i * 0.618034) % 1));
       gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
     }
   };
 
   dispose() {
     this.disposed = true;
+    this.running = false;
     cancelAnimationFrame(this.raf);
+    this.canvas.style.display = "none";
     window.removeEventListener("resize", this.resize);
     document.removeEventListener("visibilitychange", this.onVis);
     this.io.disconnect();
@@ -349,7 +446,7 @@ export class SeamRenderer {
       if (s.onLoad) s.entry.el.removeEventListener("load", s.onLoad);
       if (s.tex) gl.deleteTexture(s.tex);
       if (s.markTex) gl.deleteTexture(s.markTex);
-      s.entry.live?.dispose();
+      s.source?.dispose();
       s.entry.el.style.opacity = "";
     }
     this.slots = [];

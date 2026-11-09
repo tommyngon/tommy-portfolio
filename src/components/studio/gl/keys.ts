@@ -39,6 +39,8 @@ const KEYS: Key[] = [
 
 const CYCLE = 4; // seconds between two presses of the same key
 
+const PRESS_END = 0.066; // a press animates for this fraction of the cycle, the rest is still
+
 const easeIn = (t: number) => t * t * t;
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -55,7 +57,7 @@ function pressAt(time: number, delay: number): { down: number; shade: number } {
     const k = easeOut((p - 0.03) / 0.022);
     return { down: PRESS + (-1.5 - PRESS) * k, shade: 1 - k };
   }
-  if (p < 0.066) return { down: -1.5 + 1.5 * ((p - 0.052) / 0.014), shade: 0 };
+  if (p < PRESS_END) return { down: -1.5 + 1.5 * ((p - 0.052) / 0.014), shade: 0 };
   return { down: 0, shade: 0 };
 }
 
@@ -117,6 +119,7 @@ export class KeysSource {
   private ctx: CanvasRenderingContext2D;
   private clip = sinkClip();
   private disposed = false;
+  private pressedLastFrame = false;
 
   private constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
@@ -163,6 +166,18 @@ export class KeysSource {
     ctx.fill(polygon([tf, tr, [tr[0], deep], [tf[0], deep]]));
     ctx.fillStyle = DECK;
     ctx.fill(polygon([tl, tb, tr, tf]));
+  }
+
+  /** False while every key is at rest (about 60% of the time): no redraw or re-upload needed. */
+  changed(timeSec: number): boolean {
+    const pressing = KEYS.some(([, , , , delay]) => {
+      if (delay === null) return false;
+      const p = (((timeSec - delay) % CYCLE) + CYCLE) % CYCLE / CYCLE;
+      return p < PRESS_END;
+    });
+    const out = pressing || this.pressedLastFrame; // one more frame after a press ends, so the key is drawn back at rest
+    this.pressedLastFrame = pressing;
+    return out;
   }
 
   /** Draws one frame at `timeSec`; `pressing: false` draws every key at rest (the still). */

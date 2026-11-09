@@ -36,24 +36,61 @@ export default function SeamColumn({ items, className }: { items: SeamItem[]; cl
     return () => io.disconnect();
   }, [items]);
 
+  // The GL column waits until the intro has played out and the column is close to the
+  // viewport, so its context, shaders and uploads never compete with the intro.
   useEffect(() => {
     const root = rootRef.current;
     const canvas = canvasRef.current;
     if (!root || !canvas) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const renderer = SeamRenderer.create(canvas);
-    if (!renderer) return;
-    canvas.style.display = "block";
-    root.querySelectorAll<HTMLElement>("[data-seam]").forEach((wrap) => {
-      const el = wrap.querySelector("img");
-      if (!el) return;
-      const item = items[Number(wrap.dataset.index)];
-      const live = item?.live ? createLiveSource(item.live) : null;
-      renderer.add({ el, wrap, live: live ?? undefined, mark: live ? item.mark : undefined });
-    });
+    let renderer: SeamRenderer | null = null;
+    let cancelled = false;
+    let idle = 0;
+    let settle = 0;
+    const start = () => {
+      if (cancelled || renderer) return;
+      renderer = SeamRenderer.create(canvas);
+      if (!renderer) return;
+      root.querySelectorAll<HTMLElement>("[data-seam]").forEach((wrap) => {
+        const el = wrap.querySelector("img");
+        if (!el) return;
+        const item = items[Number(wrap.dataset.index)];
+        renderer!.add({
+          el,
+          wrap,
+          live: item?.live ? () => createLiveSource(item.live!) : undefined,
+          mark: item?.live ? item.mark : undefined,
+        });
+      });
+    };
+    const whenIdle = () => {
+      if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(start, { timeout: 200 });
+      else idle = window.setTimeout(start, 80);
+    };
+    const near = new IntersectionObserver(
+      (es) => {
+        if (es.some((e) => e.isIntersecting)) {
+          near.disconnect();
+          whenIdle();
+        }
+      },
+      { rootMargin: "200% 0px 200% 0px" },
+    );
+    const watch = () => near.observe(root);
+    // the event fires as the overlay starts to fade: give the fade and the first reveals the frames first
+    const afterIntro = () => {
+      settle = window.setTimeout(watch, 700);
+    };
+    if (document.documentElement.dataset.intro === "running") window.addEventListener("studio:intro-done", afterIntro, { once: true });
+    else watch();
     return () => {
-      renderer.dispose();
-      canvas.style.display = "none";
+      cancelled = true;
+      window.removeEventListener("studio:intro-done", afterIntro);
+      window.clearTimeout(settle);
+      near.disconnect();
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+      renderer?.dispose();
     };
   }, [items]);
 

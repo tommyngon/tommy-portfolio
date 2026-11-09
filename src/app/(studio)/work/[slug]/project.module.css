@@ -64,33 +64,6 @@
   height: 24svh;
 }
 
-/* exhibit: contained, in the page flow, full content width */
-.exhibit {
-  position: relative;
-  z-index: 3;
-  background: var(--c-paper);
-  padding: 8svh var(--gutter) 12svh;
-}
-.exhibitLabel {
-  margin: 0 0 12px var(--step);
-  color: var(--c-muted);
-}
-.frame {
-  display: block;
-  position: relative;
-  /* the middle four grid columns: an exhibit, not a wall */
-  width: calc(4 * var(--col) + 3 * var(--gap));
-  margin-left: var(--step);
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  contain: layout paint;
-  transform: translateZ(0); /* contains any fixed descendants */
-  isolation: isolate;
-}
-.frameTall {
-  aspect-ratio: 16 / 10;
-}
-
 /* end screen */
 .end {
   position: relative;
@@ -157,21 +130,6 @@
   }
   .spacer {
     height: 70svh;
-  }
-  .exhibit {
-    padding: 6svh var(--gutter) 8svh;
-  }
-  .frame {
-    aspect-ratio: 4 / 3;
-    width: auto;
-    margin-left: 0;
-  }
-  .exhibitLabel {
-    margin-left: 0;
-  }
-  .frameTall {
-    aspect-ratio: auto;
-    height: 640px;
   }
   .end {
     display: flex;

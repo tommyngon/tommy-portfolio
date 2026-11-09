@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { COLUMN } from "@/lib/work";
@@ -6,13 +7,18 @@ import s from "./shell.module.css";
 
 const FLAG = "studio:intro-seen";
 const START_DELAY = 220; // blank paper
-const FALL_MS = 780; // one card's fall
-const STAGGER_MS = 60; // between cards (the cascade takes ~1s from the first sliver)
-const HOLD_MS = 850; // column rests (or until a click / skip)
-const ZOOM_MS = 800; // column scales up so card 1 lands on the target
-const FADE_MS = 200; // overlay crossfade into the real page
-const EASE_FALL = "cubic-bezier(0.33, 0.1, 0.3, 1)";
+const FALL_MS = 960; // one card's fall
+const STAGGER_MS = 65; // between cards (the cascade takes ~1.3s from the first sliver)
+const FALL_SAMPLES = 40; // keyframes per card; the curve lives in these, the animation itself is linear
+const HOLD_MS = 620; // column rests (or until a click / skip)
+const HOLD_DRIFT = 1.02; // the hold is not a dead stop: the column keeps swelling a touch into the zoom
+const ZOOM_MS = 880; // column scales up so card 1 lands on the target
+const FADE_MS = 280; // overlay crossfade into the real page
 const EASE_IN_OUT = "cubic-bezier(0.65, 0, 0.35, 1)";
+const OMEGA = 7; // stiffness of the fall's critically damped curve (per unit of FALL_MS)
+const SPRING_END = 1 - (1 + OMEGA) * Math.exp(-OMEGA);
+// 0 to 1 from rest to rest, with no velocity jumps: sheets ease out of the emergence point and settle
+const spring = (t: number) => (1 - (1 + OMEGA * t) * Math.exp(-OMEGA * t)) / SPRING_END;
 const PERSPECTIVE = 900;
 const COLUMN_TOP = 0.18; // of viewport height
 const ORIGIN_Y = 0.19;
@@ -119,7 +125,7 @@ function Intro({ force }: { force: boolean }) {
       if (!root) return end();
       finish(); // header + text start revealing under the fade
       html.style.overflow = "";
-      await run(root, [{ opacity: 1 }, { opacity: 0 }], ms, "linear");
+      await run(root, [{ opacity: 1 }, { opacity: 0 }], ms, "ease-out");
       end();
     };
 
@@ -146,12 +152,13 @@ function Intro({ force }: { force: boolean }) {
     window.addEventListener("studio:skip-intro", onSkip);
     window.addEventListener("studio:sound", onSound);
 
+    // Every image is decoded before the first card moves, including ones already in the
+    // cache, so no card can stall a frame on its first paint. The wait is capped so a slow
+    // connection still gets its intro.
     const loaded = async () => {
       const imgs = cards.map((c) => c.querySelector("img")).filter(Boolean) as HTMLImageElement[];
-      const all = Promise.all(
-        imgs.map((im) => (im.complete && im.naturalWidth ? undefined : im.decode().catch(() => undefined))),
-      );
-      await Promise.race([all, sleep(1500)]);
+      const all = Promise.all(imgs.map((im) => im.decode().catch(() => undefined)));
+      await Promise.race([all, sleep(2500)]);
     };
 
     const play = async () => {
@@ -171,7 +178,10 @@ function Intro({ force }: { force: boolean }) {
         el.style.left = `${x0}px`;
         el.style.top = `${y0 + i * (H + gap)}px`;
         el.style.zIndex = String(cards.length - i);
+        el.style.willChange = "transform, opacity"; // layers are ready before the first frame moves
       });
+      col.style.willChange = "transform";
+      col.style.transformOrigin = "0 0";
 
       await loaded();
       if (cancelled) return;
@@ -180,39 +190,46 @@ function Intro({ force }: { force: boolean }) {
 
       const tf = (dx: number, dy: number, r: number[], sc: number) =>
         `translate(${dx}px, ${dy}px) perspective(${PERSPECTIVE}px) rotateX(${r[0]}deg) rotateY(${r[1]}deg) rotateZ(${r[2]}deg) scale(${sc})`;
+      // One continuous curve per card, sampled into keyframes (no segment corners): the
+      // card swings out, drifts sideways and lands flat in its slot.
       const falls = cards.map((el, i) => {
         const dx = ox - (x0 + W / 2);
         const dy = oy - (y0 + i * (H + gap) + H / 2);
         const r = TUMBLE[i % TUMBLE.length];
         const sx = SCATTER[i % SCATTER.length] * W;
-        el.style.willChange = "transform, opacity";
-        return run(
-          el,
-          [
-            { transform: tf(dx, dy, r, 0.05), opacity: 0, offset: 0 },
-            { transform: tf(dx, dy, r, 0.06), opacity: 1, offset: 0.06 },
-            {
-              transform: tf(dx * 0.5 + sx, dy * 0.55, [r[0] * 0.7, r[1] * 0.7, r[2] * 0.8], 0.42),
-              opacity: 1,
-              offset: 0.42,
-            },
-            {
-              transform: tf(sx * 0.25, dy * 0.12, [r[0] * 0.2, r[1] * 0.2, r[2] * 0.3], 0.9),
-              opacity: 1,
-              offset: 0.78,
-            },
-            { transform: tf(0, 0, [0, 0, 0], 1), opacity: 1, offset: 1 },
-          ],
-          FALL_MS,
-          EASE_FALL,
-          i * STAGGER_MS,
-        );
+        const frames: Keyframe[] = [];
+        for (let k = 0; k <= FALL_SAMPLES; k++) {
+          const t = k / FALL_SAMPLES;
+          const e = spring(t);
+          frames.push({
+            transform: tf(
+              dx * (1 - e) + sx * Math.sin(Math.PI * e),
+              dy * (1 - e),
+              [r[0] * (1 - e), r[1] * (1 - e), r[2] * (1 - e)],
+              0.05 + 0.95 * e,
+            ),
+            opacity: Math.min(1, t / 0.07),
+            offset: t,
+          });
+        }
+        return run(el, frames, FALL_MS, "linear", i * STAGGER_MS);
       });
       await Promise.all(falls);
       if (cancelled) return;
 
       // hold, until the timer runs out or the visitor clicks
       if (!go) {
+        const midX = x0 + W / 2;
+        const midY = vh / 2;
+        anims.push(
+          col.animate(
+            [
+              { transform: "translate(0px, 0px) scale(1)" },
+              { transform: `translate(${midX * (1 - HOLD_DRIFT)}px, ${midY * (1 - HOLD_DRIFT)}px) scale(${HOLD_DRIFT})` },
+            ],
+            { duration: HOLD_MS, easing: "linear", fill: "forwards" },
+          ),
+        );
         await new Promise<void>((res) => {
           wake = res;
           timers.push(window.setTimeout(res, HOLD_MS));
@@ -241,12 +258,13 @@ function Intro({ force }: { force: boolean }) {
       const tt = r ? r.top : vh / 2 - (H * sc) / 2;
       const tx = tl - sc * x0;
       const ty = tt - sc * y0;
-      col.style.transformOrigin = "0 0";
-      col.style.willChange = "transform";
+      // the zoom picks up exactly where the hold's drift has got to
+      const from = new DOMMatrixReadOnly(getComputedStyle(col).transform);
+      anims.filter((a) => a.effect && (a.effect as KeyframeEffect).target === col).forEach((a) => a.cancel());
       const zoom = run(
         col,
         [
-          { transform: "translate(0px, 0px) scale(1)" },
+          { transform: `translate(${from.e}px, ${from.f}px) scale(${from.a})` },
           { transform: `translate(${tx}px, ${ty}px) scale(${sc})` },
         ],
         ZOOM_MS,
@@ -274,7 +292,8 @@ function Intro({ force }: { force: boolean }) {
       // cards off-screen, so they dissolve on the way and card 1 arrives alone.
       if (sc < 4) {
         cards.slice(1).forEach((c) => {
-          void run(c, [{ opacity: 1, offset: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 0, offset: 0.85 }], ZOOM_MS, "linear");
+          // the offset-1 frame matters: without it the card snaps back to its fall's end state (opaque) as card 1 lands
+          void run(c, [{ opacity: 1, offset: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 0, offset: 0.85 }, { opacity: 0, offset: 1 }], ZOOM_MS, "linear");
         });
       }
       await zoom;
@@ -326,8 +345,13 @@ function Intro({ force }: { force: boolean }) {
               }}
               className={s.thumb}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className={s.thumbImg} draggable={false} />
+              {i === 0 ? (
+                // eslint-disable-next-line @next/next/no-img-element -- the card that lands on the real sheet: the same file, not a resized copy
+                <img src={src} alt="" className={s.thumbImg} draggable={false} decoding="async" />
+              ) : (
+                // the others are small and short-lived: a small variant decodes 10x faster
+                <Image src={src} alt="" width={384} height={480} sizes="192px" loading="eager" className={s.thumbImg} draggable={false} />
+              )}
             </div>
           ))}
         </div>

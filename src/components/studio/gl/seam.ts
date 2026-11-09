@@ -1,8 +1,9 @@
 // Raw WebGL2 renderer for the "seam bend" image column. Own code.
 // A live source (e.g. the QBIKK orb) draws itself into its own canvas; the column re-uploads
 // that canvas every frame while the sheet is on screen. `el` stays as the static fallback.
+// `mark` is a transparent sheet-sized layer (the QBIKK wordmark) laid over a live source in white.
 export type LiveSource = { canvas: HTMLCanvasElement; render(timeSec: number): void; dispose(): void };
-export type SeamEntry = { el: HTMLImageElement; wrap: HTMLElement; live?: LiveSource };
+export type SeamEntry = { el: HTMLImageElement; wrap: HTMLElement; live?: LiveSource; mark?: string };
 
 const GRID = 32;
 
@@ -63,10 +64,12 @@ precision mediump float;
 in vec2 v_uv;
 in float v_roll;
 uniform sampler2D u_tex;
+uniform sampler2D u_mark;
 uniform float u_fade;
 out vec4 o;
 void main() {
   vec3 c = texture(u_tex, v_uv).rgb;
+  c = mix(c, vec3(1.0), texture(u_mark, v_uv).a);
   float a = u_fade * v_roll;
   o = vec4(c * a, a);
 }`;
@@ -82,6 +85,7 @@ function compile(gl: WebGL2RenderingContext, type: number, src: string) {
 type Slot = {
   entry: SeamEntry;
   tex: WebGLTexture | null;
+  markTex: WebGLTexture | null;
   wanted: boolean;
   readyAt: number;
   lift: number;
@@ -95,6 +99,7 @@ export class SeamRenderer {
   private prog: WebGLProgram;
   private vao: WebGLVertexArrayObject;
   private buffers: WebGLBuffer[] = [];
+  private noMark: WebGLTexture; // 1x1 transparent, bound for every sheet without a mark
   private count: number;
   private loc: Record<string, WebGLUniformLocation | null> = {};
   private slots: Slot[] = [];
@@ -127,7 +132,7 @@ export class SeamRenderer {
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("link");
     this.prog = prog;
-    for (const n of ["u_rect", "u_vp", "u_amt", "u_tex", "u_fade", "u_crop", "u_seed", "u_time", "u_lift"]) this.loc[n] = gl.getUniformLocation(prog, n);
+    for (const n of ["u_rect", "u_vp", "u_amt", "u_tex", "u_mark", "u_fade", "u_crop", "u_seed", "u_time", "u_lift"]) this.loc[n] = gl.getUniformLocation(prog, n);
 
     const n = GRID + 1;
     const uv = new Float32Array(n * n * 2);
@@ -157,6 +162,10 @@ export class SeamRenderer {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
     this.buffers.push(vb, ib);
 
+    this.noMark = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, this.noMark);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+
     this.io = new IntersectionObserver(
       (es) => {
         for (const e of es) {
@@ -178,7 +187,7 @@ export class SeamRenderer {
   add(entry: SeamEntry) {
     // Hide the DOM image from the start; the canvas fades it in when its texture is ready.
     entry.el.style.opacity = "0";
-    this.slots.push({ entry, tex: null, wanted: false, readyAt: 0, lift: 0, hover: false });
+    this.slots.push({ entry, tex: null, markTex: null, wanted: false, readyAt: 0, lift: 0, hover: false });
     entry.wrap.addEventListener("pointerenter", () => this.setHover(entry, true));
     entry.wrap.addEventListener("pointerleave", () => this.setHover(entry, false));
     this.io.observe(entry.wrap);
@@ -194,6 +203,24 @@ export class SeamRenderer {
     s.wanted = true;
     const el = s.entry.el;
     const live = s.entry.live;
+    if (s.entry.mark) {
+      const img = new Image();
+      img.onload = () => {
+        if (this.disposed) return;
+        const gl = this.gl;
+        const t = gl.createTexture()!;
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        s.markTex = t;
+      };
+      img.src = s.entry.mark;
+    }
     if (live) {
       const gl = this.gl;
       const t = gl.createTexture()!;
@@ -282,13 +309,16 @@ export class SeamRenderer {
     gl.uniform1f(this.loc.u_amt, this.amt);
     gl.uniform1f(this.loc.u_time, now / 1000);
     gl.uniform1i(this.loc.u_tex, 0);
-    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(this.loc.u_mark, 1);
     for (const s of this.slots) {
       if (!s.tex) continue;
       const r = s.entry.el.getBoundingClientRect();
       if (r.bottom < -vh * 0.2 || r.top > vh * 1.2 || r.width < 1) continue;
       const t = Math.min(1, (now - s.readyAt) / 700);
       const fade = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // ease in-out cubic, ~var(--ease)
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, s.markTex ?? this.noMark);
+      gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, s.tex);
       const live = s.entry.live;
       if (live) {
@@ -318,11 +348,13 @@ export class SeamRenderer {
     for (const s of this.slots) {
       if (s.onLoad) s.entry.el.removeEventListener("load", s.onLoad);
       if (s.tex) gl.deleteTexture(s.tex);
+      if (s.markTex) gl.deleteTexture(s.markTex);
       s.entry.live?.dispose();
       s.entry.el.style.opacity = "";
     }
     this.slots = [];
     for (const b of this.buffers) gl.deleteBuffer(b);
+    gl.deleteTexture(this.noMark);
     gl.deleteVertexArray(this.vao);
     gl.deleteProgram(this.prog);
     // the context itself stays alive: React may re-attach this same canvas (StrictMode,

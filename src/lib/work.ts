@@ -2,6 +2,7 @@
 // images live in /public/work/ (prepared by the asset step).
 
 export type WorkImage = { src: string; alt: string };
+export type LiveKind = "orb" | "keys";
 
 export type Project = {
   slug: string;
@@ -13,8 +14,9 @@ export type Project = {
   link?: { label: string; href: string };
   images?: WorkImage[]; // omitted until the project has pictures
   // the one sheet this project gets in the scrolling column; `live` swaps the still for an
-  // animated source (the still stays as the fallback without WebGL or with reduced motion)
-  cover?: WorkImage & { live?: "orb" };
+  // animated source (the still stays as the fallback without WebGL or with reduced motion).
+  // `mark` is a transparent sheet-sized layer drawn on top of the live source, in white.
+  cover?: WorkImage & { live?: LiveKind; mark?: string };
 };
 
 export const PROJECTS: Project[] = [
@@ -31,7 +33,7 @@ export const PROJECTS: Project[] = [
     outcome: "qbikk.com",
     credit: "QBIKK, Trondheim, Norway",
     link: { label: "qbikk.com", href: "https://qbikk.com" },
-    cover: { src: "/work/qbikk-1.webp", alt: "QBIKK: the AI orb", live: "orb" },
+    cover: { src: "/work/qbikk-sheet.webp", alt: "QBIKK: the wordmark over the AI orb", live: "orb", mark: "/work/qbikk-mark.webp" },
     images: [
       { src: "/work/qbikk-1.webp", alt: "QBIKK: the glass cube and voice preview" },
       { src: "/work/qbikk-2.webp", alt: "QBIKK: the cube reacting to a voice note" },
@@ -71,7 +73,7 @@ export const PROJECTS: Project[] = [
     outcome: "stackwise-tetris.vercel.app",
     credit: "Tommy Ngo Nguyen, Trondheim, Norway",
     link: { label: "Visit the site", href: "https://stackwise-tetris.vercel.app" },
-    cover: { src: "/work/stackwise-sheet.webp", alt: "Stackwise: the wordmark above keyboard keycaps on violet" },
+    cover: { src: "/work/stackwise-sheet.webp", alt: "Stackwise: isometric keyboard keycaps", live: "keys" },
     images: [
       { src: "/work/stackwise-1.webp", alt: "Stackwise: front page with the wordmark and keycaps" },
       { src: "/work/stackwise-2.webp", alt: "Stackwise: a guided lesson showing the target placement and the keys to press" },
@@ -91,7 +93,7 @@ export const PROJECTS: Project[] = [
     outcome: "staerk.vercel.app",
     credit: "Tommy Ngo Nguyen, Trondheim, Norway",
     link: { label: "Visit the site", href: "https://staerk.vercel.app" },
-    cover: { src: "/work/staerk-sheet.webp", alt: "Staerk: the wordmark over brushed silver foil" },
+    cover: { src: "/work/staerk-sheet.webp", alt: "Staerk: the wordmark over the app's grey texture and tick dial" },
     images: [
       { src: "/work/staerk-1.webp", alt: "Staerk: opening screen with the wordmark on silver foil" },
       { src: "/work/staerk-2.webp", alt: "Staerk: logging a set with the reps and weight dials" },

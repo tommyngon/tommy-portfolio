@@ -76,6 +76,14 @@
 }
 .endImg { object-fit: cover; opacity: 0; }
 .endImg[data-on] { opacity: 1; }
+.endLive { position: absolute; inset: 0; opacity: 0; }
+.endLive[data-on] { opacity: 1; }
+.endLive canvas,
+.endLive img { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* touch has no hover to reveal it, and the sheets are already in the column above */
+@media (hover: none), (max-width: 640px) {
+  .endFigure { display: none; }
+}
 .footer {
   position: relative;
   z-index: 3;
@@ -132,9 +140,8 @@
   .tab2 { padding-left: 40%; }
   .page { padding-top: 0; }
   .spacer { height: 14svh; }
-  .end { height: auto; padding: 12svh var(--gutter) 6svh; display: flex; flex-direction: column-reverse; gap: 6svh; }
+  .end { height: auto; padding: 12svh var(--gutter) 6svh; }
   .index { position: static; width: auto; }
-  .endFigure { position: relative; right: auto; top: auto; width: 70vw; align-self: center; }
   .footer { display: flex; flex-direction: column; gap: 12px; margin-top: 0; }
   .footC { justify-self: auto; width: auto; }
   .tail { height: 10svh; }

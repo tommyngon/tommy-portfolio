@@ -2,11 +2,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { OrbSource } from "./gl/orb";
+import type { LiveKind } from "@/lib/work";
+import { createLiveSource } from "./gl/live";
 import { SeamRenderer } from "./gl/seam";
 import css from "./SeamColumn.module.css";
 
-export type SeamItem = { src: string; alt: string; href: string; caption?: string; live?: "orb" };
+export type SeamItem = { src: string; alt: string; href: string; caption?: string; live?: LiveKind; mark?: string };
 
 export default function SeamColumn({ items, className }: { items: SeamItem[]; className?: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -46,8 +47,9 @@ export default function SeamColumn({ items, className }: { items: SeamItem[]; cl
     root.querySelectorAll<HTMLElement>("[data-seam]").forEach((wrap) => {
       const el = wrap.querySelector("img");
       if (!el) return;
-      const live = items[Number(wrap.dataset.index)]?.live === "orb" ? OrbSource.create(512, 640) : null;
-      renderer.add({ el, wrap, live: live ?? undefined });
+      const item = items[Number(wrap.dataset.index)];
+      const live = item?.live ? createLiveSource(item.live) : null;
+      renderer.add({ el, wrap, live: live ?? undefined, mark: live ? item.mark : undefined });
     });
     return () => {
       renderer.dispose();

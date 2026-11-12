@@ -49,6 +49,9 @@ export default function AboutPage() {
           Tommy Ngo Nguyen with Claude
           <br />
           Website by <span className={styles.signature}>Tommy Ngo Nguyen</span>
+          <a href="/intro-til-ml" data-no-transition>
+            Intro til ML
+          </a>
         </p>
       </footer>
     </main>

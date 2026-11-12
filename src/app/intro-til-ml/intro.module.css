@@ -1,0 +1,133 @@
+/* Midlertidig studieside. Slettes sammen med src/app/intro-til-ml/. */
+.root {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #111;
+  overflow-wrap: anywhere;
+}
+
+.root h1,
+.root h2,
+.root h3 {
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-wrap: wrap;
+  margin: 0 0 12px;
+}
+.root h1 { font-size: 26px; }
+.root h2 { font-size: 20px; }
+
+.root p,
+.root ul,
+.root ol,
+.root pre,
+.root details { margin: 0 0 12px; }
+.root ul { list-style: disc; padding-left: 1.25em; }
+.root ol { list-style: decimal; padding-left: 1.25em; }
+.root a { text-decoration: underline; }
+.root hr { border: 0; border-top: 1px solid rgba(17, 17, 17, 0.2); margin: 16px 0; }
+.root summary { cursor: pointer; margin-bottom: 8px; }
+.root input { accent-color: #111; }
+
+.md > :last-child { margin-bottom: 0; }
+.md + .md, .md + p { margin-top: 12px; }
+
+.root code {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 0.9em;
+  background: rgba(17, 17, 17, 0.06);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+.root pre {
+  overflow-x: auto;
+  overflow-wrap: normal;
+  background: rgba(17, 17, 17, 0.06);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.root pre code { background: none; padding: 0; font-size: inherit; }
+
+.root table { border-collapse: collapse; margin-bottom: 12px; overflow-wrap: normal; font-size: 15px; }
+.root th,
+.root td { border: 1px solid rgba(17, 17, 17, 0.2); padding: 4px 8px; text-align: left; vertical-align: top; }
+
+.root button {
+  font: inherit;
+  color: #111;
+  background: transparent;
+  border: 1px solid #111;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s, background-color 0.15s;
+}
+.root button:hover:not(:disabled) { opacity: 0.75; }
+.root button:disabled { opacity: 0.4; cursor: default; }
+.root button.primary { background: #111; color: #f1eee9; }
+
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+.row label { display: flex; align-items: center; gap: 6px; }
+.meta { color: rgba(17, 17, 17, 0.65); font-size: 14px; }
+.blk { display: block; }
+.big { font-size: 22px; font-weight: 600; }
+
+.card {
+  background: #faf8f5;
+  border: 1px solid rgba(17, 17, 17, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.root .menu { display: flex; flex-direction: column; gap: 8px; }
+.root .menu a { display: block; text-decoration: none; padding: 14px 16px; }
+
+.root .opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: #faf8f5;
+  border: 1px solid rgba(17, 17, 17, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.opt input { flex: none; margin-top: 6px; }
+.opt b { flex: none; min-width: 1.2em; }
+.root .sel { background: #e6e1d9; border-color: #111; }
+.root .right { color: #2f6b2f; background: rgba(47, 107, 47, 0.12); border-color: #2f6b2f; }
+.root .wrong { color: #a33333; background: rgba(163, 51, 51, 0.1); border-color: #a33333; }
+.pill { padding: 0 8px; border-radius: 4px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+.root button.nav { padding: 2px 0; min-width: 34px; font-size: 14px; }
+.root .done { background: #111; color: #f1eee9; }
+.root .cur { outline: 2px solid #111; outline-offset: 2px; }
+
+.root button.chap {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #faf8f5;
+  border-color: rgba(17, 17, 17, 0.15);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+.chap > span { display: block; }
+.bar { height: 4px; margin-top: 8px; border-radius: 2px; background: rgba(17, 17, 17, 0.12); overflow: hidden; }
+.bar i { display: block; height: 100%; background: #2f6b2f; transition: width 0.15s; }
+
+.reveal { opacity: 0; transition: opacity 0.15s; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(17, 17, 17, 0.15); }
+.shown { opacity: 1; }

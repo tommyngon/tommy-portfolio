@@ -16,12 +16,24 @@ const ITEMS = [
   },
   {
     n: "3",
+    label: "/stackwise",
+    kind: "(tetris skill trainer)",
+    href: "/work/stackwise",
+  },
+  {
+    n: "4",
+    label: "/staerk",
+    kind: "(training logger)",
+    href: "/work/staerk",
+  },
+  {
+    n: "5",
     label: "/artefakt-archive",
     kind: "(clothing and products)",
     href: "/work/artefakt-archive",
   },
   {
-    n: "4",
+    n: "6",
     label: "/huskelappen",
     kind: "(application)",
     href: "/work/huskelappen",
@@ -43,11 +55,14 @@ const DASHED = [
   "M178 304a140 136 0 1 0 280 0a140 136 0 1 0 -280 0", // left sphere
   "M330 436a129 46 0 1 0 258 0a129 46 0 1 0 -258 0", // bottom ring
 ];
-// the dot each project sits on, and which side its label hangs
+// the dot each project sits on, and which side its label hangs. The six run clockwise round
+// the outer shell, so every label sits on the paper outside the drawing.
 const DOTS = [
-  { x: 340.8, y: 125.3, side: "left" }, // outer shell, upper left
-  { x: 611.3, y: 233.7, side: "right" }, // tall loop, right flank
-  { x: 641.3, y: 451.4, side: "below" }, // outer shell, lower right
+  { x: 340.8, y: 125.3, side: "up-left" }, // outer shell, upper left
+  { x: 641.3, y: 152.6, side: "up-right" }, // outer shell, upper right
+  { x: 741.3, y: 288.4, side: "right" }, // outer shell, far right
+  { x: 641.3, y: 451.4, side: "down-right" }, // outer shell, lower right
+  { x: 340.8, y: 478.7, side: "down-left" }, // outer shell, lower left
   { x: 178.7, y: 315.6, side: "left" }, // outer shell, far left
 ] as const;
 const CENTRE = { x: 458, y: 298 };
@@ -207,9 +222,6 @@ export default function OverviewMenu({
                 );
               })}
             </ul>
-            <p className={styles.progress}>
-              <HoverTranslate en="in progress" no="under arbeid" />
-            </p>
           </div>
         </div>
       ) : (

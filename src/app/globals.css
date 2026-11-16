@@ -186,19 +186,25 @@
    half the viewport − the top bar (~50px) − half the portrait (w × 4/3 ÷ 2) */
 .sheet-portrait {
   margin-top: max(6svh, calc(50svh - 50px - clamp(120px, 10.5vw, 150px) * 2 / 3));
-  /* keep the 3D cube in its own layer so the overview curtain can pass over it */
+  /* keep the 3D cube in its own layer so the overview curtain can pass over it; layer 1 keeps
+     it in front of the pinned name */
   position: relative;
-  z-index: 0;
+  z-index: 1;
   isolation: isolate;
 }
 
+/* the statement sits in the slot the pinned name stands on (--name-below, set on the home page),
+   in front of the name as it scrolls away */
 .sheet-text {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
   margin-top: auto;
-  padding: 7svh 0 5svh;
+  height: var(--name-below, auto);
+  padding: var(--name-gap, 7svh) 0 5svh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.6rem;
 }
 
 .statement {

@@ -12,9 +12,9 @@ const ENTRIES: IndexEntry[] = PROJECTS.map((p, i) => ({
   cover: p.cover,
 }));
 
-// The collection: fixed serif block, the bending column, the index and the footer.
-export default function Collection() {
-  const year = new Date().getFullYear();
+// The collection: fixed serif block, the bending column, the index and the footer. The home
+// page leaves the footer out here and sets it under the pinned name instead (footer={false}).
+export default function Collection({ footer = true }: { footer?: boolean }) {
   return (
     <section className={styles.page} aria-label="Work">
       {/* a printed caption: six lines on two tab stops, like a gallery wall label */}
@@ -49,28 +49,36 @@ export default function Collection() {
 
       <WorkIndex entries={ENTRIES} />
 
-      <footer className={styles.footer}>
-        <p className={styles.footA}>
-          <HoverText en="Trondheim," no="Trondheim," />
-          <br />
-          <HoverText en="Norway" no="Norge" />
-        </p>
-        <p className={styles.footB}>
-          <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
-          {SOCIALS.map((s) => (
-            <span key={s.label}>
-              <br />
-              <a href={s.href} target="_blank" rel="noopener noreferrer">
-                {s.label}
-              </a>
-            </span>
-          ))}
-        </p>
-        <p className={styles.footC}>
-          <HoverText en="Design and code by Tommy Ngo Nguyen" no="Design og kode av Tommy Ngo Nguyen" />
-          <br />© {year}
-        </p>
-      </footer>
+      {footer ? <SiteFooter /> : null}
     </section>
+  );
+}
+
+// Place, contact and credit on the six-column grid.
+export function SiteFooter({ className }: { className?: string }) {
+  const year = new Date().getFullYear();
+  return (
+    <footer className={className ? `${styles.footer} ${className}` : styles.footer}>
+      <p className={styles.footA}>
+        <HoverText en="Trondheim," no="Trondheim," />
+        <br />
+        <HoverText en="Norway" no="Norge" />
+      </p>
+      <p className={styles.footB}>
+        <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+        {SOCIALS.map((s) => (
+          <span key={s.label}>
+            <br />
+            <a href={s.href} target="_blank" rel="noopener noreferrer">
+              {s.label}
+            </a>
+          </span>
+        ))}
+      </p>
+      <p className={styles.footC}>
+        <HoverText en="Design and code by Tommy Ngo Nguyen" no="Design og kode av Tommy Ngo Nguyen" />
+        <br />© {year}
+      </p>
+    </footer>
   );
 }

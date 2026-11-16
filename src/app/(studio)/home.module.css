@@ -1,0 +1,93 @@
+/* Home: the name is pinned just above the statement for the whole way down. The sheets, the
+   text and the portrait pass in front of it (they sit on layer 1, the name on layer 0), and it
+   comes to rest as the last band of the page with the footer set under it. */
+.home {
+  --u: calc(100vw / 1470);
+  --red: #a20000;
+  /* the room under the name: the statement on the first screen, the footer on the last */
+  --name-gap: 20px;
+  --name-below: calc(var(--name-gap) + 92px + 5svh);
+  /* the name fills the width between the gutters: Inter 700 at -0.045em is K times its size wide
+     (measured 10.383, plus the 0.045em the last letter overhangs its trailing spacing) */
+  --name-k: 10.43;
+  --name-h: calc((100vw - 2 * var(--gutter)) / var(--name-k));
+  /* the name and the footer under it; the end of the collection leaves this much room */
+  --name-band: calc(var(--name-h) + var(--name-below));
+}
+
+/* Sticky to the bottom with the footer's height as the inset: from the first screen on it
+   stands where it will finally rest, so the end of the page arrives under it without a jump. */
+.pin {
+  position: sticky;
+  z-index: 0;
+  bottom: var(--name-below);
+  container-type: inline-size; /* sizes the name to the page width, scrollbar excluded */
+  overflow-x: clip; /* never widens the page, even before the font has loaded */
+  pointer-events: none;
+}
+
+.name {
+  margin: 0;
+  padding-inline: var(--gutter);
+  color: var(--red);
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: calc((100cqw - 2 * var(--gutter)) / var(--name-k));
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* fades in as the intro lifts (0.5 s, ease-in-out); instant with reduced motion */
+  transition: opacity 0.5s cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+:global(html[data-intro="running"]) .name {
+  opacity: 0;
+  transition: none;
+}
+
+.name span {
+  display: inline-block;
+  pointer-events: auto;
+  /* the soft red halo: a wide glow plus a tight one so the edge fades over a few pixels */
+  text-shadow:
+    0 0 max(3px, calc(6 * var(--u))) var(--red),
+    0 0 max(1px, calc(2 * var(--u))) var(--red);
+  transition: opacity 0.2s ease;
+}
+
+.name span:hover {
+  opacity: 0.8;
+}
+
+/* the footer, moved under the name: the same columns, in the slot the statement had above */
+.home .foot {
+  box-sizing: border-box;
+  height: var(--name-below);
+  margin-top: 0;
+  padding-top: var(--name-gap);
+  padding-bottom: 0;
+  align-content: start;
+}
+
+@media (max-width: 640px) {
+  .home {
+    --name-gap: 16px;
+    --name-below: calc(var(--name-gap) + 88px + 5svh);
+  }
+
+  /* two columns: place and contact side by side, the credit below */
+  .home .foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px var(--gutter);
+  }
+
+  .home .foot > p {
+    grid-column: auto;
+  }
+
+  .home .foot > p:last-child {
+    grid-column: 1 / -1;
+  }
+}

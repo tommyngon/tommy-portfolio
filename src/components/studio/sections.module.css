@@ -20,10 +20,11 @@
 /* /work */
 .page { position: relative; padding-top: 33svh; } /* the serif block enters exactly where it then holds */
 /* The serif block holds still at a third of the screen for as long as the collection is
-   on screen (sticky, zero height, so it never pushes the column); the objects pass over it. */
+   on screen (sticky, zero height, so it never pushes the column); the objects pass over it.
+   Layer 1, like the column: on the home page the pinned name (layer 0) stays behind both. */
 .hero {
   position: sticky;
-  z-index: 0;
+  z-index: 1;
   top: 33svh;
   height: 0;
   margin-left: calc(var(--gutter) + 2 * var(--step));
@@ -44,18 +45,20 @@
   padding-left: 61%;
 }
 .spacer { height: 29svh; } /* first object starts just below the serif block */
-.column { width: var(--column-w); margin: 0 auto; }
+/* its own layer, so the sheets (WebGL, or the plain images) always pass in front of the home page's name */
+.column { position: relative; z-index: 1; width: var(--column-w); margin: 0 auto; }
 .tail { height: 24svh; }
-/* end of the collection: index bottom-left, the hovered object on the right, footer on the grid */
+/* end of the collection: index bottom-left, the hovered object on the right, footer on the grid.
+   On the home page --name-band (the name and the footer under it) takes the bottom of this screen. */
 .end {
   position: relative;
   z-index: 2;
-  height: 100svh;
+  height: calc(100svh - var(--name-band, 0px));
 }
 .index {
   position: absolute;
   left: var(--gutter);
-  top: 62svh;
+  top: calc(62svh - var(--name-band, 0px) / 4);
   width: calc(2 * var(--col) + var(--gap));
   display: flex;
   flex-wrap: wrap;

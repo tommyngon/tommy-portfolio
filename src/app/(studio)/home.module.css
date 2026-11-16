@@ -10,7 +10,9 @@
   /* the name fills the width between the gutters: Inter 700 at -0.045em is K times its size wide
      (measured 10.383, plus the 0.045em the last letter overhangs its trailing spacing) */
   --name-k: 10.43;
-  --name-h: calc((100vw - 2 * var(--gutter)) / var(--name-k));
+  /* the name is set at this share of the full gutter-to-gutter width, centred */
+  --name-scale: 0.62;
+  --name-h: calc((100vw - 2 * var(--gutter)) / var(--name-k) * var(--name-scale));
   /* the name and the footer under it; the end of the collection leaves this much room */
   --name-band: calc(var(--name-h) + var(--name-below));
 }
@@ -31,10 +33,11 @@
   padding-inline: var(--gutter);
   color: var(--red);
   font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
-  font-size: calc((100cqw - 2 * var(--gutter)) / var(--name-k));
+  font-size: calc((100cqw - 2 * var(--gutter)) / var(--name-k) * var(--name-scale));
   font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1;
+  text-align: center;
   text-transform: uppercase;
   white-space: nowrap;
   /* fades in as the intro lifts (0.5 s, ease-in-out); instant with reduced motion */
@@ -49,10 +52,12 @@
 .name span {
   display: inline-block;
   pointer-events: auto;
-  /* the soft red halo: a wide glow plus a tight one so the edge fades over a few pixels */
+  /* a faint bioluminescent glow: a tight warm rim keeps each letter crisp, a wider, paler
+     bloom lifts it off the paper */
   text-shadow:
-    0 0 max(3px, calc(6 * var(--u))) var(--red),
-    0 0 max(1px, calc(2 * var(--u))) var(--red);
+    0 0 max(1px, calc(1.5 * var(--u))) rgb(255 70 50 / 0.45),
+    0 0 max(6px, calc(10 * var(--u))) rgb(255 45 30 / 0.22),
+    0 0 max(14px, calc(26 * var(--u))) rgb(210 0 0 / 0.12);
   transition: opacity 0.2s ease;
 }
 
@@ -72,6 +77,7 @@
 
 @media (max-width: 640px) {
   .home {
+    --name-scale: 0.86;
     --name-gap: 16px;
     --name-below: calc(var(--name-gap) + 88px + 5svh);
   }

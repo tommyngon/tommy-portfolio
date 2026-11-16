@@ -61,21 +61,6 @@ export default function LandingSheet() {
           </div>
 
           <div className="sheet-text">
-            <dl className="ident">
-              <dt>
-                <HoverTranslate en="name" no="navn" align="end" />
-              </dt>
-              <dd>
-                <span className="ident-colon">:</span> tommy ngo nguyen
-              </dd>
-              <dt>
-                <HoverTranslate en="born" no="født" align="end" />
-              </dt>
-              <dd>
-                <span className="ident-colon">:</span> 06.07.1999
-              </dd>
-            </dl>
-
             <div className="statement">
               {PARAGRAPHS.map((lines, p) => (
                 <p key={p}>

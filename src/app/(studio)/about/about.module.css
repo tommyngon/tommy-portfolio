@@ -61,6 +61,33 @@
 .footer a:focus-visible {
   text-decoration: underline;
 }
+/* name / born: the first column of the footer row, under the portrait, in the mono of the
+   corner bars; labels right-aligned to a shared colon column */
+.ident {
+  position: absolute;
+  top: 0;
+  left: var(--gutter);
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  column-gap: 0.45em;
+  margin: 0;
+  font-family: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--t-m);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.ident dt {
+  text-align: right;
+}
+.ident dd {
+  margin: 0;
+  white-space: nowrap;
+}
+.identColon {
+  margin-right: 0.3em;
+}
 .place {
   left: calc(var(--gutter) + 2 * var(--step));
 }
@@ -86,7 +113,8 @@
   .label,
   .body,
   .footer,
-  .footer p {
+  .footer p,
+  .ident {
     position: static;
   }
   .photo {

@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono } from "next/font/google";
 import Image from "next/image";
+import HoverTranslate from "@/components/HoverTranslate";
 import { CONTACT, SOCIALS } from "@/lib/site";
 import styles from "./about.module.css";
+
+// the same mono as the corner bars, so the name / born labels can flip letter by letter
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: "400", variable: "--font-plex-mono" });
 
 export const metadata: Metadata = {
   title: "about — Tommy Ngo Nguyen",
@@ -30,6 +35,21 @@ export default function AboutPage() {
       </div>
 
       <footer className={styles.footer}>
+        {/* name / born under the portrait, like the caption on an ID card */}
+        <dl className={`${styles.ident} ${mono.variable}`}>
+          <dt>
+            <HoverTranslate en="name" no="navn" align="end" />
+          </dt>
+          <dd>
+            <span className={styles.identColon}>:</span> tommy ngo nguyen
+          </dd>
+          <dt>
+            <HoverTranslate en="born" no="født" align="end" />
+          </dt>
+          <dd>
+            <span className={styles.identColon}>:</span> 06.07.1999
+          </dd>
+        </dl>
         <p className={styles.place}>
           Trondheim,
           <br />

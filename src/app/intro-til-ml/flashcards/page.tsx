@@ -7,7 +7,7 @@ export default function Page() {
   return (
     <>
       <p><Link href="/intro-til-ml">← Intro til ML</Link></p>
-      <h1>Flashcards og hurtigquiz</h1>
+      <h1>Flashcards, quiz og koble sammen</h1>
       <Flashcards data={raw as StudyData} />
     </>
   );

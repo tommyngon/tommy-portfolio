@@ -131,3 +131,6 @@
 
 .reveal { opacity: 0; transition: opacity 0.15s; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(17, 17, 17, 0.15); }
 .shown { opacity: 1; }
+
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; align-items: start; }
+@media (max-width: 600px) { .cols { grid-template-columns: 1fr; } }

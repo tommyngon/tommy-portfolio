@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Flashcard, QuizQuestion, StudyData } from "../_data/types";
 import s from "../intro.module.css";
+import Match from "./Match";
 import Md from "./Md";
 
 type Card = Flashcard & { id: string };
@@ -185,15 +186,17 @@ function Quiz({ quiz }: { quiz: QuizQuestion[] }) {
 }
 
 export default function Flashcards({ data }: { data: StudyData }) {
-  const [tab, setTab] = useState<"kort" | "quiz">("kort");
+  const [tab, setTab] = useState<"kort" | "quiz" | "koble">("kort");
   return (
     <>
       <div className={s.row}>
         <button className={tab === "kort" ? s.primary : ""} onClick={() => setTab("kort")}>Flashcards</button>
         <button className={tab === "quiz" ? s.primary : ""} onClick={() => setTab("quiz")}>Hurtigquiz</button>
+        <button className={tab === "koble" ? s.primary : ""} onClick={() => setTab("koble")}>Koble sammen</button>
       </div>
       <div hidden={tab !== "kort"}><Cards data={data} /></div>
       <div hidden={tab !== "quiz"}><Quiz quiz={data.quiz} /></div>
+      <div hidden={tab !== "koble"}><Match data={data} /></div>
     </>
   );
 }

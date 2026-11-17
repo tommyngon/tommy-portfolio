@@ -1,0 +1,291 @@
+/* The end of the home page: the stone's slide, then place and contact over the name.
+   Without motion it is two plain screens; with motion ([data-motion], set by script) a tall
+   track keeps one stage pinned while the slide and the footer play out on it. */
+.end {
+  position: relative;
+  /* the stone's size, as the script sets it: px per stone unit (the still is drawn at 300) */
+  --stone: min(0.28 * 100svh, 0.185 * 100vw);
+  --stone-y: 56%;
+}
+
+/* drawn on approach, over the page and under the stage's text */
+.canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.track {
+  position: relative;
+}
+
+.stage {
+  position: relative;
+  z-index: 3;
+}
+
+.slide {
+  position: relative;
+  height: 100svh;
+  overflow: hidden; /* the still is wider than a phone */
+}
+
+/* top-left, in the reference's place: the second column, under the corner labels */
+.text {
+  position: absolute;
+  left: calc(var(--gutter) + var(--step));
+  top: calc(var(--header-h) + 3svh);
+  max-width: calc(100% - var(--gutter) * 2);
+  margin: 0;
+  font-family: var(--f-ui);
+  font-size: max(16px, 1.39vw);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--c-ink);
+}
+
+.mask {
+  display: block;
+  overflow: hidden;
+  /* room for descenders inside the mask */
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.line {
+  display: block;
+}
+
+.end[data-motion] .line {
+  transform: translateY(110%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.end[data-motion] .text[data-on] .line {
+  transform: none;
+}
+
+.still {
+  position: absolute;
+  left: 50%;
+  top: var(--stone-y);
+  width: calc(var(--stone) * 4);
+  height: auto;
+  max-width: none;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+.caption {
+  position: absolute;
+  left: 50%;
+  top: var(--stone-y);
+  margin: 0;
+  translate: -50% -50%;
+  color: #fff;
+  font-size: max(16px, 1.39vw);
+  font-weight: 500;
+  line-height: 1.25;
+  text-transform: none;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---- the footer: place and contact on the grid, the name across the bottom ---- */
+.finale {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 72svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* the name's capitals sit a gutter above the bottom edge (its box runs 0.136em below them) */
+  padding-bottom: max(0px, calc(var(--gutter) - 0.01304 * (100vw - 2 * var(--gutter))));
+}
+
+.info {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, var(--col));
+  column-gap: var(--gap);
+  margin: 0 var(--gutter) max(28px, 2.4vw);
+  padding-top: 14px;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.info p {
+  margin: 0;
+}
+
+/* a hairline over the footer; with motion it draws across from the left as the footer arrives */
+.rule {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--c-hair);
+  transform-origin: 0 50%;
+}
+
+.info a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.info a:hover,
+.info a:focus-visible {
+  text-decoration: underline;
+}
+
+.copy {
+  grid-column: 1;
+}
+
+.place {
+  grid-column: 3;
+}
+
+.contact {
+  grid-column: 4;
+}
+
+.top {
+  grid-column: 6;
+  justify-self: end;
+  text-align: right;
+}
+
+.muted {
+  color: var(--c-muted);
+}
+
+.topBtn {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.topBtn:hover,
+.topBtn:focus-visible {
+  text-decoration: underline;
+}
+
+.finalWrap {
+  container-type: inline-size;
+  overflow-x: clip;
+}
+
+/* the same name as the pinned one, at the full width between the gutters */
+.name {
+  --name-k: 10.43;
+  margin: 0;
+  padding-inline: var(--gutter);
+  color: var(--red, #a20000);
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: calc((100cqw - 2 * var(--gutter)) / var(--name-k));
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.name[data-away] [data-letters] {
+  pointer-events: none;
+}
+
+/* ---- motion: one pinned stage ---- */
+.end[data-motion] .track {
+  height: 340svh;
+}
+
+.end[data-motion] .stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.end[data-motion] .slide {
+  position: absolute;
+  inset: 0;
+  height: auto;
+}
+
+.end[data-motion] .finale {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.end[data-motion] .finale[data-live] .info,
+.end[data-motion] .finale:focus-within .info {
+  pointer-events: auto;
+}
+
+/* tabbing into the footer before it has risen in shows it at once */
+.end[data-motion] .finale:focus-within [data-reveal] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.end[data-motion] .caption {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .end {
+    --stone: min(0.28 * 100svh, 0.34 * 100vw);
+  }
+
+  .text {
+    left: var(--gutter);
+    right: var(--gutter);
+    font-size: 17px;
+  }
+
+  .caption {
+    font-size: 15px;
+  }
+
+  .info {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "place contact"
+      "copy top";
+    row-gap: 18px;
+    column-gap: var(--gutter);
+    margin-bottom: 22px;
+  }
+
+  .copy {
+    grid-area: copy;
+    align-self: end;
+  }
+
+  .place {
+    grid-area: place;
+  }
+
+  .contact {
+    grid-area: contact;
+  }
+
+  .top {
+    grid-area: top;
+    justify-self: start;
+    text-align: left;
+  }
+}

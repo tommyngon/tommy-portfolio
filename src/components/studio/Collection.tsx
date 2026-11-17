@@ -13,10 +13,11 @@ const ENTRIES: IndexEntry[] = PROJECTS.map((p, i) => ({
 }));
 
 // The collection: fixed serif block, the bending column, the index and the footer. The home
-// page leaves the footer out here and sets it under the pinned name instead (footer={false}).
+// page leaves the footer out (footer={false}) and ends with its own (StoneEnd); there the
+// index sits under the pinned name (data-under-name).
 export default function Collection({ footer = true }: { footer?: boolean }) {
   return (
-    <section className={styles.page} aria-label="Work">
+    <section className={styles.page} aria-label="Work" data-under-name={footer ? undefined : ""}>
       {/* a printed caption: six lines on two tab stops, like a gallery wall label */}
       <div className={`${styles.hero} title-caps`} aria-hidden="true">
         <span className={styles.heroRow}>

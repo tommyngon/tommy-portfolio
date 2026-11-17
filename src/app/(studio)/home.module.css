@@ -1,10 +1,11 @@
 /* Home: the name is pinned just above the statement for the whole way down. The sheets, the
-   text and the portrait pass in front of it (they sit on layer 1, the name on layer 0), and it
-   comes to rest as the last band of the page with the footer set under it. */
+   text and the portrait pass in front of it (they sit on layer 1, the name on layer 0); the
+   index at the end of the collection passes behind it. At the end of the page it hands over
+   to the stone (StoneEnd), which hands back a larger name at the very bottom. */
 .home {
   --u: calc(100vw / 1470);
   --red: #a20000;
-  /* the room under the name: the statement on the first screen, the footer on the last */
+  /* the room under the name: the statement on the first screen */
   --name-gap: 20px;
   --name-below: calc(var(--name-gap) + 92px + 5svh);
   /* the name fills the width between the gutters: Inter 700 at -0.045em is K times its size wide
@@ -13,12 +14,12 @@
   /* the name is set at this share of the full gutter-to-gutter width, centred */
   --name-scale: 0.62;
   --name-h: calc((100vw - 2 * var(--gutter)) / var(--name-k) * var(--name-scale));
-  /* the name and the footer under it; the end of the collection leaves this much room */
+  /* the name and the room under it; the end of the collection leaves this much */
   --name-band: calc(var(--name-h) + var(--name-below));
 }
 
-/* Sticky to the bottom with the footer's height as the inset: from the first screen on it
-   stands where it will finally rest, so the end of the page arrives under it without a jump. */
+/* Sticky to the bottom with the statement's height as the inset: it stands still the whole
+   way down, and at the end of the collection the stone takes over from exactly this spot. */
 .pin {
   position: sticky;
   z-index: 0;
@@ -49,30 +50,9 @@
   transition: none;
 }
 
-.name span {
-  display: inline-block;
-  pointer-events: auto;
-  /* a faint bioluminescent glow: a tight warm rim keeps each letter crisp, a wider, paler
-     bloom lifts it off the paper */
-  text-shadow:
-    0 0 max(1px, calc(1.5 * var(--u))) rgb(255 70 50 / 0.45),
-    0 0 max(6px, calc(10 * var(--u))) rgb(255 45 30 / 0.22),
-    0 0 max(14px, calc(26 * var(--u))) rgb(210 0 0 / 0.12);
-  transition: opacity 0.2s ease;
-}
-
-.name span:hover {
-  opacity: 0.8;
-}
-
-/* the footer, moved under the name: the same columns, in the slot the statement had above */
-.home .foot {
-  box-sizing: border-box;
-  height: var(--name-below);
-  margin-top: 0;
-  padding-top: var(--name-gap);
-  padding-bottom: 0;
-  align-content: start;
+/* hidden while the drawn name stands in for it at the end of the page */
+.pin[data-away] [data-letters] {
+  pointer-events: none;
 }
 
 @media (max-width: 640px) {
@@ -80,20 +60,5 @@
     --name-scale: 0.86;
     --name-gap: 16px;
     --name-below: calc(var(--name-gap) + 88px + 5svh);
-  }
-
-  /* two columns: place and contact side by side, the credit below */
-  .home .foot {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px var(--gutter);
-  }
-
-  .home .foot > p {
-    grid-column: auto;
-  }
-
-  .home .foot > p:last-child {
-    grid-column: 1 / -1;
   }
 }

@@ -65,6 +65,11 @@
   gap: 0 0.5em;
   font-size: var(--t-s);
 }
+/* the home page's pinned name (layer 0, later in the page) passes in front of the index but
+   behind the hovered sheet */
+.page[data-under-name] .end { z-index: auto; }
+.page[data-under-name] .index { z-index: 0; }
+.page[data-under-name] .endFigure { z-index: 1; }
 .index a { color: #c4c0ba; text-decoration: none; transition: color 120ms linear; }
 .index a[aria-current="true"],
 .index a:focus-visible { color: var(--c-ink); outline: none; }
@@ -133,8 +138,10 @@
 .selected a:focus-visible { text-decoration: underline; outline: none; }
 
 @media (max-width: 640px) {
+  /* in the flow here, but still layer 1: in front of the home page's pinned name */
   .hero {
-    position: static;
+    position: relative;
+    z-index: 1;
     height: auto;
     width: auto;
     margin: calc(var(--header-h) + 16svh) var(--gutter) 0;

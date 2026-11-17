@@ -8,8 +8,8 @@ import s from "./home.module.css";
 // The landing sheet first; scrolling down walks straight into the collection (held back on
 // the live site while it is in progress, see lib/launch.ts). The name stays pinned just above
 // the statement the whole way down, behind the sheets and the text, in front of the index.
-// On the last screen its letters gather into a red stone, and the name returns large at the
-// very bottom under place and contact (StoneEnd).
+// On the last screen it grows and settles across the very bottom, under place and contact,
+// beside a red stone (StoneEnd).
 export default function Home() {
   return (
     <main id="main" className={s.home}>

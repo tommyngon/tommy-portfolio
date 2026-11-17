@@ -16,17 +16,17 @@ const smooth = (a: number, b: number, x: number) => {
 
 // The choreography, in viewport heights of scroll from the moment the pinned name would start
 // to scroll away (u = 0). The last screen is pinned from u = P on; the page ends at u = end.
-const GATHER_FROM = 0.42; // the letters start to leave
-const GATHER_PAST = 0.06; // ...and are gone this far past P
-const FORM_FROM = 0.6; // the stone starts to form (it has risen past the name by then)
-const FORM_PAST = 0.24; // ...and is whole this far past P
-const FOOT_PAST = 0.16; // the footer starts to arrive this far past P
+const STONE_BEFORE = 0.42; // the stone starts to come into focus this far before P
+const STONE_PAST = 0.1; // ...and is sharp and whole this far past P
+const NAME_PAST = 0.02; // the name starts to grow this far past P
+const NAME_SPAN = 0.46; // ...and has settled at the bottom this much later
+const FOOT_PAST = 0.3; // the footer starts to arrive this far past P
 
 const DRIFT = [0.035, 0.13, 0] as const; // rad/s about the screen's x, y, z: the stone's own slow turn
 const RETURN = 1.6; // s, a thrown stone settles back to the drift
 const LIGHT_LAG = 0.3; // s, the light trails the pointer
 // the pose of the still (public/home/stone.webp), column-major
-const POSE = [0.1957, -0.3378, -0.9207, -0.5201, 0.7602, -0.3894, 0.8314, 0.555, -0.0269];
+const POSE = [0.905, 0.2065, -0.372, -0.0954, 0.9506, 0.2955, 0.4146, -0.232, 0.8799];
 
 // R <- rot(axis x, y, z by small angles) * R, kept orthonormal
 function spin(R: Float32Array, ax: number, ay: number, az: number) {
@@ -69,10 +69,11 @@ function writer() {
   };
 }
 
-// The scroll-linked ending (see StoneEnd), and the stone itself. The pinned name is held where
-// it stood while its letters draw together, soften and slip behind the stone, which forms from
-// a small red bead as they arrive; then the footer rises in and the large name re-forms letter
-// by letter. All of it follows the scroll, so it plays back the same way. The stone turns
+// The scroll-linked ending (see StoneEnd), and the stone itself. The pinned name never leaves:
+// it is held where it stood while the last screen arrives, then grows and glides down into
+// the place kept for it at the bottom, as the footer rises in above it. The stone, whole from
+// the first frame, comes into focus on its own as its screen arrives. All of it follows the
+// scroll, so it plays back the same way. The stone turns
 // slowly on its own, can be thrown round by dragging, and is lit by a light that trails the
 // pointer. The WebGL part is imported once the ending is within a few screens; until it is
 // ready (or without WebGL2) the still stands in. Reduced motion: none of this, a plain screen.
@@ -94,11 +95,11 @@ export default function StoneMotion() {
     const finalName = q("final");
     const rule = q("rule");
     const reveals = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
-    const finalChars = Array.from(finalName?.querySelectorAll<HTMLElement>("[data-ch]") ?? []);
+    const finalLetters = finalName?.querySelector<HTMLElement>("[data-letters]") ?? null;
     const pin = document.querySelector<HTMLElement>("[data-name-pin]");
     const pinLetters = pin?.querySelector<HTMLElement>("[data-letters]") ?? null;
-    const pinChars = Array.from(pinLetters?.querySelectorAll<HTMLElement>("[data-ch]") ?? []);
-    if (!track || !stage || !text || !stone || !finale || !finalName) return;
+    const pinName = pinLetters?.parentElement ?? null;
+    if (!track || !stage || !text || !stone || !finale || !finalName || !finalLetters) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     root.dataset.motion = "";
@@ -120,26 +121,19 @@ export default function StoneMotion() {
     let inset = 0; // the pinned name's distance from the bottom
     let trackH = 1;
     let side = 1; // the stone's square, css px
-    let pinX: number[] = []; // letter centres, px from the name's left edge
-    let pinW = 1;
-    let pinH = 1;
-    let finalX: number[] = []; // 0..1 across the large name
+    let pinH = 1; // the pinned name's height (one em)
+    let grown = 1; // how many times larger the name is at the bottom
+    let vw = 1;
     const measure = () => {
       V = stage.clientHeight || window.innerHeight;
       inset = pin ? parseFloat(getComputedStyle(pin).bottom) || 0 : 0;
       trackH = track.offsetHeight;
       side = stone.offsetWidth || 1;
-      if (pinLetters) {
-        pinW = pinLetters.offsetWidth || 1;
-        pinH = pinLetters.offsetHeight || 1;
-        const left = pinLetters.offsetLeft;
-        pinX = pinChars.map((c) => c.offsetLeft - left + c.offsetWidth / 2);
-      }
-      const fl = finalName.querySelector<HTMLElement>("[data-letters]");
-      if (fl) {
-        const left = fl.offsetLeft;
-        const w = fl.offsetWidth || 1;
-        finalX = finalChars.map((c) => (c.offsetLeft - left + c.offsetWidth / 2) / w);
+      vw = window.innerWidth;
+      if (pinName) {
+        // from the type sizes (one em each), which unlike the boxes are not rounded to whole px
+        pinH = parseFloat(getComputedStyle(pinName).fontSize) || 1;
+        grown = (parseFloat(getComputedStyle(finalName).fontSize) || pinH) / pinH;
       }
     };
 
@@ -222,12 +216,7 @@ export default function StoneMotion() {
 
     const rest = () => {
       set(pin, "transform", "");
-      flag(pin, "away", false);
-      for (const c of pinChars) {
-        set(c, "transform", "");
-        set(c, "opacity", "");
-        set(c, "filter", "");
-      }
+      set(pin, "--u", "");
     };
     const hideGL = () => {
       if (!shown) return;
@@ -248,79 +237,46 @@ export default function StoneMotion() {
       const u = (V - inset - tr.top) / V;
       const P = (V - inset) / V;
       const end = (trackH - inset) / V;
-      // the name's box, as it stood while pinned (its own transform is ours, so undo the scroll by hand)
-      const nameLeft = pinLetters ? (window.innerWidth - pinW) / 2 : 0;
-      const nameTop = V - inset - pinH;
+      const fr = finalLetters.getBoundingClientRect();
 
       // ---- the statement ----
       if (!("on" in text.dataset) && tr.top < V * 0.72) text.dataset.on = "";
 
-      // ---- the pinned name: held in place, its letters gather into the stone ----
-      const g = clamp01((u - GATHER_FROM) / (P + GATHER_PAST - GATHER_FROM));
+      // ---- the name: held where it stood, then grown into its place at the bottom ----
       if (pin) {
         if (u <= 0) rest();
         else {
-          set(pin, "transform", `translate3d(0, ${(u * V).toFixed(1)}px, 0)`);
-          flag(pin, "away", g >= 1);
-          if (g < 1) {
-            const sx = sr.left + sr.width / 2;
-            const sy = sr.top + sr.height / 2;
-            const n = pinChars.length;
-            for (let i = 0; i < n; i++) {
-              // the ends leave first, the middle last
-              const d = Math.abs(pinX[i] / pinW - 0.5) * 2;
-              const t = clamp01((g - (1 - d) * 0.36) / 0.64);
-              if (t <= 0) {
-                set(pinChars[i], "transform", "");
-                set(pinChars[i], "opacity", "");
-                set(pinChars[i], "filter", "");
-                continue;
-              }
-              const e = ease(t);
-              // each letter lifts towards the stone and is gone long before it arrives, so the
-              // name thins out from its ends and nothing ever piles up
-              const dx = (sx - (nameLeft + pinX[i])) * 0.34 * e;
-              const dy = (sy - (nameTop + pinH / 2)) * 0.8 * e * e;
-              const sc = 1 - 0.3 * e;
-              set(pinChars[i], "transform", `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) scale(${sc.toFixed(4)})`);
-              set(pinChars[i], "opacity", (1 - smooth(0.08, 0.58, t)).toFixed(3));
-              const b = smooth(0.05, 0.6, t) * pinH * 0.08;
-              set(pinChars[i], "filter", b > 0.2 ? `blur(${b.toFixed(1)}px)` : "");
-            }
-          }
+          // past u = 0 the page would carry it off: the shift keeps it standing. The growth is on
+          // the same box (about its centre), so the letters never leave it and stay hoverable.
+          const e = ease((u - P - NAME_PAST) / NAME_SPAN);
+          const k = 1 + (grown - 1) * e;
+          const dy = u * V + (fr.top + fr.height / 2 - (V - inset - pinH / 2)) * e;
+          set(pin, "transform", e > 0 ? `translateY(${dy.toFixed(1)}px) scale(${k.toFixed(4)})` : `translateY(${dy.toFixed(1)}px)`);
+          // the halo is set in page units: shrink the unit as the name grows, so it stays as fine
+          set(pin, "--u", e > 0 ? `${(vw / 1470 / k).toFixed(4)}px` : "");
         }
       }
 
-      // ---- the footer: a hairline, place and contact, then the name letter by letter ----
+      // ---- the footer: a hairline, then place and contact ----
       const f0 = P + FOOT_PAST;
       const cu = clamp01((u - f0) / Math.max(0.05, end - 0.04 - f0));
-      set(rule, "transform", `scaleX(${ease(cu / 0.5).toFixed(4)})`);
+      set(rule, "transform", `scaleX(${ease(cu / 0.7).toFixed(4)})`);
       reveals.forEach((el, i) => {
-        const k = ease((cu - 0.08 - i * 0.07) / 0.36);
+        const k = ease((cu - 0.06 - i * 0.12) / 0.56);
         set(el, "opacity", k.toFixed(3));
         set(el, "transform", k < 1 ? `translate3d(0, ${((1 - k) * 14).toFixed(1)}px, 0)` : "");
       });
       flag(finale, "live", cu > 0.5);
-      const fh = finalName.offsetHeight || 1;
-      finalChars.forEach((c, i) => {
-        // from the middle outwards, the way the other name left
-        const d = Math.abs((finalX[i] ?? 0.5) - 0.5) * 2;
-        const k = ease((cu - 0.22 - d * 0.3) / 0.46);
-        set(c, "opacity", k.toFixed(3));
-        set(c, "transform", k < 1 ? `translate3d(0, ${((1 - k) * fh * 0.16).toFixed(1)}px, 0)` : "");
-        const b = (1 - k) * fh * 0.05;
-        set(c, "filter", b > 0.2 ? `blur(${b.toFixed(1)}px)` : "");
-      });
-      flag(finalName, "away", cu < 0.9);
 
       // ---- the stone ----
-      // it starts as a small smooth pebble (not the featureless bead) and hardens into facets as it grows
-      const form = 0.45 + 0.55 * smooth(FORM_FROM + 0.04, P + FORM_PAST, u);
-      // it arrives small and quickly opaque: a dark red reads grey while it is still see-through
-      const alpha = smooth(FORM_FROM, FORM_FROM + 0.09, u);
-      const grow = 0.16 + 0.84 * ease((u - FORM_FROM) / (P + FORM_PAST - 0.06 - FORM_FROM));
-      set(caption, "opacity", smooth(P + FORM_PAST - 0.1, P + FORM_PAST + 0.06, u).toFixed(3));
-      set(still, "opacity", gl ? "0" : smooth(FORM_FROM, P + FORM_PAST, u).toFixed(3));
+      // rock-shaped from the first frame: it only comes into focus, a touch small, and settles
+      const arrive = smooth(P - STONE_BEFORE, P + STONE_PAST, u);
+      const alpha = smooth(0, 0.7, arrive);
+      const soft = (1 - ease(arrive)) * side * 0.035;
+      set(stone, "scale", arrive < 1 ? (0.9 + 0.1 * ease(arrive)).toFixed(4) : "");
+      set(stone, "filter", soft > 0.3 ? `blur(${soft.toFixed(1)}px)` : "");
+      set(caption, "opacity", smooth(P + 0.02, P + 0.3, u).toFixed(3));
+      set(still, "opacity", gl ? "0" : alpha.toFixed(3));
       if (!gl || alpha <= 0 || sr.bottom < -40 || sr.top > V + 40) {
         hideGL();
         return;
@@ -354,8 +310,7 @@ export default function StoneMotion() {
         shown = true;
         set(canvas, "visibility", "visible");
       }
-      flag(canvas, "live", form > 0.95);
-      set(canvas, "transform", grow < 1 ? `scale(${grow.toFixed(4)})` : "");
+      flag(canvas, "live", arrive > 0.95);
 
       // step the resolution down if frames run long (judged against the display's own rate)
       if (lastRender) {
@@ -373,7 +328,7 @@ export default function StoneMotion() {
         lightX: Number.isNaN(lx) ? side / 2 : lx,
         lightY: Number.isNaN(ly) ? side / 2 : ly,
         light,
-        form,
+        form: 1,
         alpha,
       };
       gl.setScale(dpr * quality);
@@ -477,6 +432,7 @@ export default function StoneMotion() {
     ro.observe(stone);
     if (pinLetters) ro.observe(pinLetters);
     ro.observe(finalName);
+    window.addEventListener("resize", measure);
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onDrag);
     canvas.addEventListener("pointerup", onUp);
@@ -496,6 +452,7 @@ export default function StoneMotion() {
       window.removeEventListener("studio:intro-done", afterIntro);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", measure);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onDrag);
       canvas.removeEventListener("pointerup", onUp);
@@ -527,21 +484,4 @@ export function BackToTop() {
       Back to top
     </button>
   );
-}
-
-// The time in Trondheim, filled in on the client.
-export function LocalTime({ className }: { className?: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit" });
-    const tick = () => {
-      el.textContent = `${fmt.format(new Date())} local time`;
-    };
-    tick();
-    const t = window.setInterval(tick, 20000);
-    return () => window.clearInterval(t);
-  }, []);
-  return <span ref={ref} className={className} />;
 }

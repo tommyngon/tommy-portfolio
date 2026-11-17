@@ -1,7 +1,7 @@
 /* Home: the name is pinned just above the statement for the whole way down. The sheets, the
    text and the portrait pass in front of it (they sit on layer 1, the name on layer 0); the
-   index at the end of the collection passes behind it. At the end of the page its letters
-   gather into the stone (StoneEnd), and the name returns large at the very bottom. */
+   index at the end of the collection passes behind it. On the last screen (StoneEnd) it
+   grows and settles across the bottom, under place and contact. */
 .home {
   --u: calc(100vw / 1470);
   --red: #bd1e1e;
@@ -19,8 +19,9 @@
 }
 
 /* Sticky to the bottom with the statement's height as the inset: it stands still the whole
-   way down; at the end of the collection the script holds it there while its letters leave. */
+   way down; on the last screen the script holds it and grows it into the name at the bottom. */
 .pin {
+  transform-origin: 50% 50%;
   position: sticky;
   z-index: 0;
   bottom: var(--name-below);
@@ -48,15 +49,6 @@
 :global(html[data-intro="running"]) .name {
   opacity: 0;
   transition: none;
-}
-
-/* once its letters have gathered into the stone */
-.pin[data-away] {
-  visibility: hidden;
-}
-
-.pin[data-away] [data-letters] {
-  pointer-events: none;
 }
 
 @media (max-width: 640px) {

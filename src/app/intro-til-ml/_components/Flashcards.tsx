@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Flashcard, QuizQuestion, StudyData } from "../_data/types";
+import type { Flashcard, QuizCategory, QuizQuestion, StudyData } from "../_data/types";
 import s from "../intro.module.css";
 import Match from "./Match";
 import Md from "./Md";
@@ -129,21 +129,40 @@ function Cards({ data }: { data: StudyData }) {
   );
 }
 
-const fresh = (list: QuizQuestion[]) => ({ list, i: 0, pick: null as string | null, score: 0, streak: 0, wrong: [] as QuizQuestion[] });
+type Z = { origin: { src: QuizQuestion[]; n?: number }; list: QuizQuestion[]; i: number; pick: string | null; score: number; streak: number; wrong: QuizQuestion[] };
+const deal = (src: QuizQuestion[], n?: number): Z => ({ origin: { src, n }, list: shuffle(src).slice(0, n), i: 0, pick: null, score: 0, streak: 0, wrong: [] });
 
-function Quiz({ quiz }: { quiz: QuizQuestion[] }) {
-  const [z, setZ] = useState(() => fresh(quiz));
+function Quiz({ cats }: { cats: QuizCategory[] }) {
+  const [z, setZ] = useState<Z | null>(null);
+
+  if (!z) {
+    const all = cats.flatMap((c) => c.quiz);
+    const row = (title: string, src: QuizQuestion[], n?: number) => (
+      <button key={title} className={s.chap} onClick={() => setZ(deal(src, n))}>
+        <span><b>{title}</b></span>
+        <span className={s.meta}>{n ?? src.length} spørsmål</span>
+      </button>
+    );
+    return (
+      <>
+        <p className={s.meta}>Velg en kategori. Spørsmålene blandes hver gang. Fasit og forklaring vises med en gang du har svart.</p>
+        {row(`Tilfeldig utvalg fra alle (${all.length} spørsmål totalt)`, all, 30)}
+        {cats.map((c) => row(c.title, c.quiz))}
+      </>
+    );
+  }
+
   const q = z.list[z.i];
-
   if (!q)
     return (
       <div className={s.card}>
         <p className={s.big}>{z.score} av {z.list.length}</p>
         <div className={s.row}>
           {z.wrong.length > 0 && (
-            <button className={s.primary} onClick={() => setZ(fresh(z.wrong))}>Ta de jeg bommet på igjen</button>
+            <button className={s.primary} onClick={() => setZ({ ...deal(z.wrong), origin: z.origin })}>Ta de jeg bommet på igjen ({z.wrong.length})</button>
           )}
-          <button onClick={() => setZ(fresh(quiz))}>Start på nytt</button>
+          <button onClick={() => setZ(deal(z.origin.src, z.origin.n))}>Samme kategori på nytt</button>
+          <button onClick={() => setZ(null)}>Velg kategori</button>
         </div>
       </div>
     );
@@ -176,16 +195,19 @@ function Quiz({ quiz }: { quiz: QuizQuestion[] }) {
           </div>
         )}
       </div>
-      {z.pick && (
-        <button className={s.primary} onClick={() => setZ({ ...z, i: z.i + 1, pick: null })}>
-          {z.i + 1 === z.list.length ? "Se resultat" : "Neste"}
-        </button>
-      )}
+      <div className={s.row}>
+        {z.pick && (
+          <button className={s.primary} onClick={() => setZ({ ...z, i: z.i + 1, pick: null })}>
+            {z.i + 1 === z.list.length ? "Se resultat" : "Neste"}
+          </button>
+        )}
+        <button onClick={() => setZ(null)}>Avbryt</button>
+      </div>
     </>
   );
 }
 
-export default function Flashcards({ data }: { data: StudyData }) {
+export default function Flashcards({ data, extra }: { data: StudyData; extra: QuizCategory[] }) {
   const [tab, setTab] = useState<"kort" | "quiz" | "koble">("kort");
   return (
     <>
@@ -195,7 +217,7 @@ export default function Flashcards({ data }: { data: StudyData }) {
         <button className={tab === "koble" ? s.primary : ""} onClick={() => setTab("koble")}>Koble sammen</button>
       </div>
       <div hidden={tab !== "kort"}><Cards data={data} /></div>
-      <div hidden={tab !== "quiz"}><Quiz quiz={data.quiz} /></div>
+      <div hidden={tab !== "quiz"}><Quiz cats={[{ title: "Original hurtigquiz", quiz: data.quiz }, ...extra]} /></div>
       <div hidden={tab !== "koble"}><Match data={data} /></div>
     </>
   );

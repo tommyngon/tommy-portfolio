@@ -33,4 +33,5 @@ export type QuizQuestion = {
   answer: string; // "B"
   explanation: string; // teksten etter "**B** – " i fasiten
 };
+export type QuizCategory = { title: string; quiz: QuizQuestion[] };
 export type StudyData = { chapters: Chapter[]; quiz: QuizQuestion[] };

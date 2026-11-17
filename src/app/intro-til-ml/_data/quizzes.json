@@ -1,0 +1,4534 @@
+{
+ "categories": [
+  {
+   "title": "Logistisk regresjon og metrikker",
+   "quiz": [
+    {
+     "n": 1,
+     "tag": "1.1",
+     "stem": "Hvilken av disse featurene er kvalitativ (kategorisk)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Antall søsken"
+      },
+      {
+       "key": "B",
+       "text": "Inntekt"
+      },
+      {
+       "key": "C",
+       "text": "Alder"
+      },
+      {
+       "key": "D",
+       "text": "Sjanger (rock, jazz, pop)"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Kvalitative variabler beskriver et endelig antall kategorier og må ofte enkodes til tall. De andre er kvantitative, altså numeriske verdier man kan regne på."
+    },
+    {
+     "n": 2,
+     "tag": "1.1",
+     "stem": "Et datasett har kolonnene alder, inntekt og kjøpte (ja/nei). Du vil forutsi om kunden kjøper. Hva er target y?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Ingen av dem, dette er uveiledet læring"
+      },
+      {
+       "key": "B",
+       "text": "Kjøpte"
+      },
+      {
+       "key": "C",
+       "text": "Alder"
+      },
+      {
+       "key": "D",
+       "text": "Inntekt"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Target er kolonnen som angir riktig svar for hvert datapunkt. Når datasettet har target, kan vi gjøre veiledet læring."
+    },
+    {
+     "n": 3,
+     "tag": "1.1",
+     "stem": "Hvilket verktøy mapper kategorier til tall under preprosessering?",
+     "options": [
+      {
+       "key": "A",
+       "text": "MinMaxScaler"
+      },
+      {
+       "key": "B",
+       "text": "dropna()"
+      },
+      {
+       "key": "C",
+       "text": "LabelEncoder"
+      },
+      {
+       "key": "D",
+       "text": "PolynomialFeatures"
+      }
+     ],
+     "answer": "C",
+     "explanation": "LabelEncoder mapper kategorier til tall. MinMaxScaler skalerer til [0, 1], og dropna() fjerner rader med manglende verdier."
+    },
+    {
+     "n": 4,
+     "tag": "1.1",
+     "stem": "Du vil skalere features med MinMaxScaler. Hva er riktig fremgangsmåte?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Del først i trening og test, kall .fit kun på treningsdata og .transform på testdata"
+      },
+      {
+       "key": "B",
+       "text": "Kall .fit på testdata og .transform på treningsdata"
+      },
+      {
+       "key": "C",
+       "text": "Kall .fit separat på trening og på test"
+      },
+      {
+       "key": "D",
+       "text": "Kall .fit på hele datasettet og del deretter"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Analysen skal være uavhengig av testdataene. Å tilpasse skaleringen på alle data gir datalekkasje."
+    },
+    {
+     "n": 5,
+     "tag": "1.2",
+     "stem": "Hvorfor bruker logistisk regresjon sigmoid-funksjonen?",
+     "options": [
+      {
+       "key": "A",
+       "text": "z = w·x + b kan bli et hvilket som helst tall, og sigmoid mapper det til (0, 1) slik at ŷ kan tolkes som sannsynlighet for y = 1"
+      },
+      {
+       "key": "B",
+       "text": "Den sørger for at gradienten alltid er 1"
+      },
+      {
+       "key": "C",
+       "text": "Den gjør tapsfunksjonen ikke-konveks"
+      },
+      {
+       "key": "D",
+       "text": "Den fjerner behovet for bias-leddet b"
+      }
+     ],
+     "answer": "A",
+     "explanation": "ŷ = σ(z) = 1/(1 + e^(−z)) ligger alltid mellom 0 og 1."
+    },
+    {
+     "n": 6,
+     "tag": "1.2",
+     "stem": "Hva er σ(0)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,5"
+      },
+      {
+       "key": "B",
+       "text": "e"
+      },
+      {
+       "key": "C",
+       "text": "0"
+      },
+      {
+       "key": "D",
+       "text": "1"
+      }
+     ],
+     "answer": "A",
+     "explanation": "σ(0) = 1/(1 + e⁰) = 1/2. Ved z = 0 er modellen helt usikker mellom klassene."
+    },
+    {
+     "n": 7,
+     "tag": "1.2",
+     "stem": "Hva er den deriverte σ′(z) i punktet z = 0?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,5"
+      },
+      {
+       "key": "B",
+       "text": "1"
+      },
+      {
+       "key": "C",
+       "text": "0,25"
+      },
+      {
+       "key": "D",
+       "text": "0"
+      }
+     ],
+     "answer": "C",
+     "explanation": "σ′(z) = σ(z)(1 − σ(z)) = 0,5·0,5 = 0,25."
+    },
+    {
+     "n": 8,
+     "tag": "1.2",
+     "stem": "En observasjon har y = 1 og modellen gir ŷ = 0,5. Hva er BCE-tapet L = −y·ln(ŷ) − (1 − y)·ln(1 − ŷ)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "≈ 0,25"
+      },
+      {
+       "key": "B",
+       "text": "0"
+      },
+      {
+       "key": "C",
+       "text": "≈ 0,69"
+      },
+      {
+       "key": "D",
+       "text": "≈ 1,39"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Siden y = 1 forsvinner det andre leddet, og L = −ln(0,5) = ln 2 ≈ 0,69."
+    },
+    {
+     "n": 9,
+     "tag": "1.2",
+     "stem": "BCE-tapet er den negative log-likelihooden til ŷ^y·(1 − ŷ)^(1−y). Hva er det da å minimere BCE?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Å estimere en prior"
+      },
+      {
+       "key": "B",
+       "text": "Å finne klyngesentre"
+      },
+      {
+       "key": "C",
+       "text": "Minste kvadraters metode"
+      },
+      {
+       "key": "D",
+       "text": "Conditional maximum likelihood estimation"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Minimering av negativ log-likelihood er det samme som å maksimere likelihooden."
+    },
+    {
+     "n": 10,
+     "tag": "1.2",
+     "stem": "Hva er gradienten ∂L/∂b til BCE for logistisk regresjon?",
+     "options": [
+      {
+       "key": "A",
+       "text": "(ŷ − y)·x"
+      },
+      {
+       "key": "B",
+       "text": "ŷ − y"
+      },
+      {
+       "key": "C",
+       "text": "y − ŷ"
+      },
+      {
+       "key": "D",
+       "text": "ŷ·(1 − ŷ)"
+      }
+     ],
+     "answer": "B",
+     "explanation": "∂L/∂wⱼ = (ŷ − y)·xⱼ og ∂L/∂b = (ŷ − y). Bias-leddet har ingen x-faktor."
+    },
+    {
+     "n": 11,
+     "tag": "1.2",
+     "stem": "Etter en forward pass er ŷ = 0,8 for y = 1, x = 3 og η = 0,1. Hvordan endres w i ett gradient descent-steg?",
+     "options": [
+      {
+       "key": "A",
+       "text": "w øker med 0,6"
+      },
+      {
+       "key": "B",
+       "text": "w forblir uendret"
+      },
+      {
+       "key": "C",
+       "text": "w minker med 0,06"
+      },
+      {
+       "key": "D",
+       "text": "w øker med 0,06"
+      }
+     ],
+     "answer": "D",
+     "explanation": "∂L/∂w = (0,8 − 1)·3 = −0,6, og w ← w − 0,1·(−0,6) = w + 0,06. Samtidig øker b med 0,02."
+    },
+    {
+     "n": 12,
+     "tag": "1.2",
+     "stem": "Hva kan skje hvis læringsraten η er satt for høy?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Treningen blir veldig treg"
+      },
+      {
+       "key": "B",
+       "text": "Tapsfunksjonen blir konveks"
+      },
+      {
+       "key": "C",
+       "text": "Modellen får garantert globalt minimum raskere"
+      },
+      {
+       "key": "D",
+       "text": "Store korrigeringer som hopper over minimum og oscillerer"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Høy η gir store steg som kan overskyte minimum. Lav η gir små endringer og treg læring."
+    },
+    {
+     "n": 13,
+     "tag": "1.2",
+     "stem": "Hvilken av disse er en hyperparameter?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Maks tredybde"
+      },
+      {
+       "key": "B",
+       "text": "Bias-leddet b"
+      },
+      {
+       "key": "C",
+       "text": "Parametrene θ"
+      },
+      {
+       "key": "D",
+       "text": "Vektene w"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Parametre (w, b, θ) læres under trening. Hyperparametre (η, epoker, batch size, maks dybde) definerer læringsprosessen og settes på forhånd."
+    },
+    {
+     "n": 14,
+     "tag": "1.2",
+     "stem": "Hva er garantert når BCE-tapet er konvekst og gradient descent finner et minimum?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Modellen får 100 % accuracy"
+      },
+      {
+       "key": "B",
+       "text": "Tapet er null"
+      },
+      {
+       "key": "C",
+       "text": "Minimumet er bare lokalt"
+      },
+      {
+       "key": "D",
+       "text": "Minimumet er globalt"
+      }
+     ],
+     "answer": "D",
+     "explanation": "En konveks funksjon har kun ett optimum. Ikke-konvekse funksjoner kan ha flere lokale minima."
+    },
+    {
+     "n": 15,
+     "tag": "1.2",
+     "stem": "I hvilken retning flytter gradient descent parametrene?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Mot den negative gradienten"
+      },
+      {
+       "key": "B",
+       "text": "Kun langs b-aksen"
+      },
+      {
+       "key": "C",
+       "text": "Mot den positive gradienten"
+      },
+      {
+       "key": "D",
+       "text": "Tilfeldig retning"
+      }
+     ],
+     "answer": "A",
+     "explanation": "θ ← θ − η·∂L/∂θ: vi går ned i tapet."
+    },
+    {
+     "n": 16,
+     "tag": "1.2.4",
+     "stem": "Hva betyr FN (false negative) i en confusion matrix?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Faktisk positiv, men predikert negativ"
+      },
+      {
+       "key": "B",
+       "text": "Faktisk negativ og predikert negativ"
+      },
+      {
+       "key": "C",
+       "text": "Faktisk positiv og predikert positiv"
+      },
+      {
+       "key": "D",
+       "text": "Faktisk negativ, men predikert positiv"
+      }
+     ],
+     "answer": "A",
+     "explanation": "FN er en oversett positiv. FP er en falsk alarm. TP og TN ligger på diagonalen."
+    },
+    {
+     "n": 17,
+     "tag": "1.2.4",
+     "stem": "En klassifikator gir TP = 30, FP = 10, FN = 20 og TN = 40. Hva er precision?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,50"
+      },
+      {
+       "key": "B",
+       "text": "0,75"
+      },
+      {
+       "key": "C",
+       "text": "0,60"
+      },
+      {
+       "key": "D",
+       "text": "0,80"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Precision = TP/(TP + FP) = 30/40 = 0,75."
+    },
+    {
+     "n": 18,
+     "tag": "1.2.4",
+     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er recall?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,67"
+      },
+      {
+       "key": "B",
+       "text": "0,40"
+      },
+      {
+       "key": "C",
+       "text": "0,60"
+      },
+      {
+       "key": "D",
+       "text": "0,75"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Recall = TP/(TP + FN) = 30/50 = 0,6."
+    },
+    {
+     "n": 19,
+     "tag": "1.2.4",
+     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er F1-score?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,50"
+      },
+      {
+       "key": "B",
+       "text": "0,75"
+      },
+      {
+       "key": "C",
+       "text": "≈ 0,67"
+      },
+      {
+       "key": "D",
+       "text": "0,60"
+      }
+     ],
+     "answer": "C",
+     "explanation": "F1 = 2TP/(2TP + FP + FN) = 60/90 ≈ 0,67. Det harmoniske snittet er lavere enn det aritmetiske."
+    },
+    {
+     "n": 20,
+     "tag": "1.2.4",
+     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er FPR?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,5"
+      },
+      {
+       "key": "B",
+       "text": "0,8"
+      },
+      {
+       "key": "C",
+       "text": "0,25"
+      },
+      {
+       "key": "D",
+       "text": "0,2"
+      }
+     ],
+     "answer": "D",
+     "explanation": "FPR = FP/(FP + TN) = 10/50 = 0,2. Spesifisitet er 1 − FPR = 0,8."
+    },
+    {
+     "n": 21,
+     "tag": "1.2.4",
+     "stem": "Av 1000 pasienter er 990 friske og 10 syke. En modell predikerer alle som friske. Hva blir accuracy og recall for syke?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Accuracy 50 %, recall 50 %"
+      },
+      {
+       "key": "B",
+       "text": "Accuracy 99 %, recall 0 %"
+      },
+      {
+       "key": "C",
+       "text": "Accuracy 99 %, recall 99 %"
+      },
+      {
+       "key": "D",
+       "text": "Accuracy 1 %, recall 100 %"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Modellen får alle friske riktige, men finner ingen av de syke. Accuracy alene er derfor misvisende ved ubalanserte data."
+    },
+    {
+     "n": 22,
+     "tag": "1.2.4",
+     "stem": "Å overse en alvorlig sykdom er veldig dyrt. Hvilken metrikk bør du prioritere?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Høy FPR"
+      },
+      {
+       "key": "B",
+       "text": "Høy recall"
+      },
+      {
+       "key": "C",
+       "text": "Lav TPR"
+      },
+      {
+       "key": "D",
+       "text": "Høy precision"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Recall straffer oversette tilfeller (FN), og er riktig når det er dyrt å bomme."
+    },
+    {
+     "n": 23,
+     "tag": "1.2.4",
+     "stem": "Hver falske alarm utløser en dyr utrykning. Hvilken metrikk bør du prioritere?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Høy precision"
+      },
+      {
+       "key": "B",
+       "text": "Høy TPR"
+      },
+      {
+       "key": "C",
+       "text": "Høy FN"
+      },
+      {
+       "key": "D",
+       "text": "Høy recall"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Precision deler på alt predikert positivt og straffer falske alarmer (FP)."
+    },
+    {
+     "n": 24,
+     "tag": "1.2.5",
+     "stem": "Ved klassifiseringsterskel 0 predikeres (nesten) alt som positivt. Hvor ligger ROC-punktet?",
+     "options": [
+      {
+       "key": "A",
+       "text": "(0, 0)"
+      },
+      {
+       "key": "B",
+       "text": "(1, 1)"
+      },
+      {
+       "key": "C",
+       "text": "(0, 1)"
+      },
+      {
+       "key": "D",
+       "text": "(1, 0)"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Både TPR og FPR er høye. ROC-kurven går fra (0, 0) ved terskel 1 til (1, 1) ved terskel 0."
+    },
+    {
+     "n": 25,
+     "tag": "1.2.5",
+     "stem": "Hva betyr det at ROC-kurven følger diagonalen?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Modellen er perfekt"
+      },
+      {
+       "key": "B",
+       "text": "AUC er 1"
+      },
+      {
+       "key": "C",
+       "text": "Modellen er ikke bedre enn tilfeldig gjetning"
+      },
+      {
+       "key": "D",
+       "text": "Modellen predikerer alltid positiv"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Diagonalen (0, 0)–(1, 1) tilsvarer myntkast, med AUC = 0,5."
+    },
+    {
+     "n": 26,
+     "tag": "1.2.5",
+     "stem": "Hva betyr ROC AUC = 0,8?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Recall er 0,8 ved terskel 0,5"
+      },
+      {
+       "key": "B",
+       "text": "80 % av punktene klassifiseres riktig"
+      },
+      {
+       "key": "C",
+       "text": "Sannsynligheten er 0,8 for at et tilfeldig positivt punkt får høyere prediksjon enn et tilfeldig negativt"
+      },
+      {
+       "key": "D",
+       "text": "Precision er 0,8"
+      }
+     ],
+     "answer": "C",
+     "explanation": "AUC er arealet under ROC-kurven, og kan tolkes som en rangeringssannsynlighet."
+    },
+    {
+     "n": 27,
+     "tag": "1.2.5",
+     "stem": "Du endrer klassifiseringsterskelen fra 0,5 til 0,3. Hva er riktig?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Vektene w endres"
+      },
+      {
+       "key": "B",
+       "text": "AUC endres"
+      },
+      {
+       "key": "C",
+       "text": "Du har trent en bedre modell"
+      },
+      {
+       "key": "D",
+       "text": "Du endrer bare hvordan prediksjonene tolkes, ikke selve modellen"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Modellen forbedres ikke, vi flytter bare langs ROC-kurven. AUC er uavhengig av terskel."
+    },
+    {
+     "n": 28,
+     "tag": "1.2",
+     "stem": "Hvilket krav stilles til tapsfunksjonen, men ikke til en metrikk som precision eller recall?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den må være deriverbar"
+      },
+      {
+       "key": "B",
+       "text": "Den må være symmetrisk"
+      },
+      {
+       "key": "C",
+       "text": "Den må være 0 for en perfekt modell"
+      },
+      {
+       "key": "D",
+       "text": "Den må ligge mellom 0 og 1"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Gradient descent trenger gradienter. Metrikker skal bare gi mening for mennesker og vise modellens styrker og svakheter."
+    },
+    {
+     "n": 29,
+     "tag": "1.2",
+     "stem": "En logistisk modell gir z = −2 for et punkt. Hvilken klasse predikeres med terskel 0,5?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Ingen, negative z gir ugyldig sannsynlighet"
+      },
+      {
+       "key": "B",
+       "text": "Klasse 0, fordi ŷ ≈ 0,12 < 0,5"
+      },
+      {
+       "key": "C",
+       "text": "Klasse 1, fordi |z| er stor"
+      },
+      {
+       "key": "D",
+       "text": "Klasse 1, fordi ŷ ≈ 0,88"
+      }
+     ],
+     "answer": "B",
+     "explanation": "σ(−2) = 1/(1 + e²) ≈ 0,12. Sigmoid gir en gyldig sannsynlighet for alle z, og z < 0 betyr ŷ < 0,5."
+    },
+    {
+     "n": 30,
+     "tag": "1.1",
+     "stem": "En feature har verdiene 2, 4 og 10. Hva blir verdien 4 etter MinMaxScaler (skalering til [0, 1])?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,4"
+      },
+      {
+       "key": "B",
+       "text": "0,25"
+      },
+      {
+       "key": "C",
+       "text": "0,5"
+      },
+      {
+       "key": "D",
+       "text": "0,2"
+      }
+     ],
+     "answer": "B",
+     "explanation": "(x − min)/(max − min) = (4 − 2)/(10 − 2) = 0,25."
+    }
+   ]
+  },
+  {
+   "title": "Entropi, Bayes og beslutningstrær",
+   "quiz": [
+    {
+     "n": 1,
+     "tag": "1.2.6",
+     "stem": "Hva måler entropien H(p) til en tilfeldig variabel?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Variansen til dataene"
+      },
+      {
+       "key": "B",
+       "text": "Usikkerheten, altså mengden informasjon"
+      },
+      {
+       "key": "C",
+       "text": "Avstanden mellom to klynger"
+      },
+      {
+       "key": "D",
+       "text": "Gjennomsnittlig prediksjonsfeil"
+      }
+     ],
+     "answer": "B",
+     "explanation": "H(p) = −Σ p(xᵢ)·log p(xᵢ) = E[log 1/p(X)] (Shannon-entropi)."
+    },
+    {
+     "n": 2,
+     "tag": "1.2.6",
+     "stem": "Hva er entropien (log₂) til en rettferdig mynt?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0"
+      },
+      {
+       "key": "B",
+       "text": "1"
+      },
+      {
+       "key": "C",
+       "text": "0,5"
+      },
+      {
+       "key": "D",
+       "text": "2"
+      }
+     ],
+     "answer": "B",
+     "explanation": "H = −(0,5·log₂0,5 + 0,5·log₂0,5) = 1. Det er maksimum for en binær variabel."
+    },
+    {
+     "n": 3,
+     "tag": "1.2.6",
+     "stem": "Hvilken binær fordeling har høyest entropi?",
+     "options": [
+      {
+       "key": "A",
+       "text": "(0,7, 0,3)"
+      },
+      {
+       "key": "B",
+       "text": "(0,5, 0,5)"
+      },
+      {
+       "key": "C",
+       "text": "(0,9, 0,1)"
+      },
+      {
+       "key": "D",
+       "text": "(1, 0)"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Entropi er størst når utfallene er like sannsynlige, og null når utfallet er sikkert."
+    },
+    {
+     "n": 4,
+     "tag": "1.2.6",
+     "stem": "I cross-entropy H(p, q) = −Σ p(xᵢ)·log q(xᵢ), hva er p og q?",
+     "options": [
+      {
+       "key": "A",
+       "text": "p og q er begge modellens prediksjoner"
+      },
+      {
+       "key": "B",
+       "text": "p er prioren, q er posterioren"
+      },
+      {
+       "key": "C",
+       "text": "p er fordelingen til de faktiske observasjonene (labels), q er modellens estimerte fordeling"
+      },
+      {
+       "key": "D",
+       "text": "p er modellens fordeling, q er labels"
+      }
+     ],
+     "answer": "C",
+     "explanation": "For flere klasser er tapet L = −Σ yᵢ·log(ŷᵢ). BCE er tilfellet med to klasser."
+    },
+    {
+     "n": 5,
+     "tag": "1.2.7",
+     "stem": "I Bayes' teorem p(C|x) = p(x|C)·p(C)/p(x), hva kalles p(C)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Evidens"
+      },
+      {
+       "key": "B",
+       "text": "Likelihood"
+      },
+      {
+       "key": "C",
+       "text": "Prior"
+      },
+      {
+       "key": "D",
+       "text": "Posterior"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Prior er klassefordelingen i treningsdata. p(x|C) er likelihood, p(x) er evidensen og p(C|x) er posterioren."
+    },
+    {
+     "n": 6,
+     "tag": "1.2.7",
+     "stem": "Hvorfor kan vi droppe evidensen p(x) når vi klassifiserer?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den avhenger av klassen, men er liten"
+      },
+      {
+       "key": "B",
+       "text": "Den er lik for alle klasser og bare en skalering"
+      },
+      {
+       "key": "C",
+       "text": "Den er alltid 1"
+      },
+      {
+       "key": "D",
+       "text": "Den kan ikke estimeres, så den ignoreres tilfeldig"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Vi bruker p(C|x) ∝ p(x|C)·p(C), siden vi bare sammenligner klassene."
+    },
+    {
+     "n": 7,
+     "tag": "1.2.8",
+     "stem": "Hva er den naive antakelsen i Naïve Bayes?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Alle klasser har lik prior"
+      },
+      {
+       "key": "B",
+       "text": "Alle features er normalfordelte"
+      },
+      {
+       "key": "C",
+       "text": "Features er uavhengige, slik at p(x|C) = Π p(xᵢ|C)"
+      },
+      {
+       "key": "D",
+       "text": "Evidensen p(x) er alltid 1"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Antakelsen brytes ofte i praksis, men modellen kan likevel fungere."
+    },
+    {
+     "n": 8,
+     "tag": "1.2.8",
+     "stem": "Naïve Bayes med to features: p(C₁) = 0,4 og p(C₀) = 0,6. p(x₁|C₁) = 0,5, p(x₂|C₁) = 0,5, p(x₁|C₀) = 0,2 og p(x₂|C₀) = 0,5. Hvilken klasse predikeres?",
+     "options": [
+      {
+       "key": "A",
+       "text": "C₁, siden 0,4·0,25 = 0,10 > 0,6·0,10 = 0,06"
+      },
+      {
+       "key": "B",
+       "text": "C₀, siden 0,06 > 0,10"
+      },
+      {
+       "key": "C",
+       "text": "C₀, siden prioren er størst"
+      },
+      {
+       "key": "D",
+       "text": "Kan ikke avgjøres uten p(x)"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Vi sammenligner p(C)·Π p(xᵢ|C) for hver klasse. Evidensen trengs ikke."
+    },
+    {
+     "n": 9,
+     "tag": "1.2.8",
+     "stem": "Er sannsynligheten fra Naïve Bayes en ekte, kalibrert posterior?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Ja, alltid"
+      },
+      {
+       "key": "B",
+       "text": "Ja, hvis klassene er balanserte"
+      },
+      {
+       "key": "C",
+       "text": "Nei, siden prioren ikke brukes"
+      },
+      {
+       "key": "D",
+       "text": "Nei, siden evidensen er droppet og uavhengighet er antatt"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Så lenge vi bare sammenligner det relative forholdet mellom klassene, beregnet på samme måte, er den likevel brukbar."
+    },
+    {
+     "n": 10,
+     "tag": "1.2.9",
+     "stem": "Du estimerer en fordeling med 10 bins per akse og 10 punkter per bin. Hvor mange punkter trengs for d = 3 dimensjoner (10^(d+1))?",
+     "options": [
+      {
+       "key": "A",
+       "text": "100 000"
+      },
+      {
+       "key": "B",
+       "text": "1 000"
+      },
+      {
+       "key": "C",
+       "text": "300"
+      },
+      {
+       "key": "D",
+       "text": "10 000"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Antall punkter vokser eksponensielt med d. Det kalles dimensjonsforbannelsen."
+    },
+    {
+     "n": 11,
+     "tag": "1.2.9",
+     "stem": "Hvordan vokser antall nødvendige datapunkter med dimensjonen d når du estimerer en d-dimensjonal fordeling?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Kvadratisk"
+      },
+      {
+       "key": "B",
+       "text": "Det avhenger ikke av d"
+      },
+      {
+       "key": "C",
+       "text": "Eksponensielt"
+      },
+      {
+       "key": "D",
+       "text": "Lineært"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Med 10 bins per akse trenger vi 10^(d+1) punkter. For MNIST (d = 784) er det 10^785."
+    },
+    {
+     "n": 12,
+     "tag": "1.2.10",
+     "stem": "I et sterkt ubalansert datasett har modellen lært å predikere majoritetsklassen. Hvilket ledd i Bayes' teorem dominerer da?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Prioren p(C)"
+      },
+      {
+       "key": "B",
+       "text": "Evidensen p(x)"
+      },
+      {
+       "key": "C",
+       "text": "Posterioren p(C|x)"
+      },
+      {
+       "key": "D",
+       "text": "Likelihood p(x|C)"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Dette kalles prior probability shift. Accuracy blir høy, men recall for minoritetsklassen blir lav."
+    },
+    {
+     "n": 13,
+     "tag": "1.2.10",
+     "stem": "Hva gjør undersampling?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Trekker like mange punkter fra majoritetsklassen som det finnes i minoritetsklassen"
+      },
+      {
+       "key": "B",
+       "text": "Gir minoritetsklassen høyere vekt i tapet"
+      },
+      {
+       "key": "C",
+       "text": "Fjerner alle outliers"
+      },
+      {
+       "key": "D",
+       "text": "Kopierer minoritetsinstanser til klassene er like store"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Ulempen er få data totalt og fare for underfit."
+    },
+    {
+     "n": 14,
+     "tag": "1.2.10",
+     "stem": "Hva er hovedrisikoen ved oversampling der minoritetsinstanser kopieres?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Ingen risiko"
+      },
+      {
+       "key": "B",
+       "text": "Accuracy faller til 50 %"
+      },
+      {
+       "key": "C",
+       "text": "Overfit, på grunn av duplikater"
+      },
+      {
+       "key": "D",
+       "text": "Underfit, på grunn av få data"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Oversampling gir like store klasser, men modellen kan huske de kopierte punktene."
+    },
+    {
+     "n": 15,
+     "tag": "1.2.10",
+     "stem": "Klasse A har 800 og klasse B har 200 punkter. Hvor mange punkter får du totalt etter hhv. undersampling og oversampling (til like store klasser)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "800 og 1600"
+      },
+      {
+       "key": "B",
+       "text": "400 og 1000"
+      },
+      {
+       "key": "C",
+       "text": "200 og 800"
+      },
+      {
+       "key": "D",
+       "text": "400 og 1600"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Undersampling: 200 + 200 = 400. Oversampling: B kopieres til 800, så 800 + 800 = 1600."
+    },
+    {
+     "n": 16,
+     "tag": "1.2.10",
+     "stem": "I vektet BCE, L = −w₁·y·ln(ŷ) − w₀·(1 − y)·ln(1 − ŷ), er w₀ ≫ w₁. Hva prioriterer modellen?",
+     "options": [
+      {
+       "key": "A",
+       "text": "En lavere læringsrate"
+      },
+      {
+       "key": "B",
+       "text": "Å treffe riktig på y = 0"
+      },
+      {
+       "key": "C",
+       "text": "Å treffe riktig på y = 1"
+      },
+      {
+       "key": "D",
+       "text": "Begge klasser likt"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Klassen med høyest vekt teller mest i tapet."
+    },
+    {
+     "n": 17,
+     "tag": "1.2.10",
+     "stem": "Den positive klassen (y = 1) er sjelden og viktig. Hvordan bør vektene velges i vektet BCE?",
+     "options": [
+      {
+       "key": "A",
+       "text": "w₁ = w₀ = 1"
+      },
+      {
+       "key": "B",
+       "text": "w₁ > w₀"
+      },
+      {
+       "key": "C",
+       "text": "w₁ = 0"
+      },
+      {
+       "key": "D",
+       "text": "w₁ < w₀"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Den viktigste, ofte underrepresenterte klassen gis høyest vekt."
+    },
+    {
+     "n": 18,
+     "tag": "1.3",
+     "stem": "Hva er en trestump (decision stump)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Et tre med dybde 10"
+      },
+      {
+       "key": "B",
+       "text": "En løvnode uten data"
+      },
+      {
+       "key": "C",
+       "text": "Et tre uten rotnode"
+      },
+      {
+       "key": "D",
+       "text": "Én rotnode med n = 2 løvnoder"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Rotnoden har all data inn, og løvnodene splitter ikke og inneholder predikert verdi."
+    },
+    {
+     "n": 19,
+     "tag": "1.3",
+     "stem": "Hvilken splitt velger et beslutningstre?",
+     "options": [
+      {
+       "key": "A",
+       "text": "En tilfeldig splitt"
+      },
+      {
+       "key": "B",
+       "text": "Den som gir flest noder"
+      },
+      {
+       "key": "C",
+       "text": "Den som reduserer usikkerheten mest (lavest Gini eller størst informasjonsgevinst)"
+      },
+      {
+       "key": "D",
+       "text": "Den som gir lengst tre"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Splitten velges slik at beslutningen tas tidligst mulig."
+    },
+    {
+     "n": 20,
+     "tag": "1.3",
+     "stem": "Hvilke verdier kan Gini impurity ha i det binære tilfellet?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Fra −1 til 1"
+      },
+      {
+       "key": "B",
+       "text": "Fra 0 til 2"
+      },
+      {
+       "key": "C",
+       "text": "Fra 0 til 0,5"
+      },
+      {
+       "key": "D",
+       "text": "Fra 0 til 1"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Gini = 1 − Σ pᵢ². 0 er en ren node og 0,5 er 50/50."
+    },
+    {
+     "n": 21,
+     "tag": "1.3",
+     "stem": "En node har 3 positive og 7 negative punkter. Hva er Gini?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,42"
+      },
+      {
+       "key": "B",
+       "text": "0,50"
+      },
+      {
+       "key": "C",
+       "text": "0,58"
+      },
+      {
+       "key": "D",
+       "text": "0,21"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Gini = 1 − 0,3² − 0,7² = 1 − 0,09 − 0,49 = 0,42."
+    },
+    {
+     "n": 22,
+     "tag": "1.3",
+     "stem": "Et datasett har 10 positive og 10 negative. En splitt gir D₁ med 8 positive og 0 negative, og D₂ med 2 positive og 10 negative. Hva er vektet Gini etter splitten?",
+     "options": [
+      {
+       "key": "A",
+       "text": "≈ 0,17"
+      },
+      {
+       "key": "B",
+       "text": "≈ 0,28"
+      },
+      {
+       "key": "C",
+       "text": "≈ 0,39"
+      },
+      {
+       "key": "D",
+       "text": "≈ 0,08"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Gini(D₁) = 0 og Gini(D₂) = 1 − (1/6)² − (5/6)² ≈ 0,278. Vektet: (8/20)·0 + (12/20)·0,278 ≈ 0,17."
+    },
+    {
+     "n": 23,
+     "tag": "1.3",
+     "stem": "Hva er maksimal entropi (log₂) for en binær node, og når inntreffer den?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,5, ved en 50/50-fordeling"
+      },
+      {
+       "key": "B",
+       "text": "2, ved en 50/50-fordeling"
+      },
+      {
+       "key": "C",
+       "text": "1, ved en ren node"
+      },
+      {
+       "key": "D",
+       "text": "1, ved en 50/50-fordeling"
+      }
+     ],
+     "answer": "D",
+     "explanation": "En ren node har entropi 0."
+    },
+    {
+     "n": 24,
+     "tag": "1.3",
+     "stem": "Informasjonsgevinst er ΔI = I_før − E[I_etter]. Hvilken splitt velges?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den med størst ΔI"
+      },
+      {
+       "key": "B",
+       "text": "Den med minst ΔI"
+      },
+      {
+       "key": "C",
+       "text": "Den med ΔI = 0"
+      },
+      {
+       "key": "D",
+       "text": "Den med negativ ΔI"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Størst ΔI betyr at usikkerheten reduseres mest."
+    },
+    {
+     "n": 25,
+     "tag": "1.3",
+     "stem": "En node har entropi 1. En splitt gir to noder med 60 % og 40 % av punktene, og entropi 0,5 og 0,25. Hva er ΔI?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,35"
+      },
+      {
+       "key": "B",
+       "text": "0,6"
+      },
+      {
+       "key": "C",
+       "text": "0,4"
+      },
+      {
+       "key": "D",
+       "text": "0,75"
+      }
+     ],
+     "answer": "B",
+     "explanation": "E[I_etter] = 0,6·0,5 + 0,4·0,25 = 0,4, så ΔI = 1 − 0,4 = 0,6."
+    },
+    {
+     "n": 26,
+     "tag": "1.3",
+     "stem": "Hvorfor er Gini default i sklearns DecisionTreeClassifier?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den gir i hovedsak de samme splittene og er raskere, uten logaritme"
+      },
+      {
+       "key": "B",
+       "text": "Den fungerer bare for regresjon"
+      },
+      {
+       "key": "C",
+       "text": "Den gir helt andre og bedre splitter"
+      },
+      {
+       "key": "D",
+       "text": "Den er mer nøyaktig enn entropi"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Entropi krever en ekstra logaritme og er dyrere å regne ut."
+    },
+    {
+     "n": 27,
+     "tag": "1.3",
+     "stem": "Hvilket av disse er IKKE et stoppkriterium for et beslutningstre?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Maks dybde er nådd"
+      },
+      {
+       "key": "B",
+       "text": "Det er ikke flere features å teste"
+      },
+      {
+       "key": "C",
+       "text": "Det er ikke flere datapunkter å teste"
+      },
+      {
+       "key": "D",
+       "text": "Treningsdataene har flere enn 1000 punkter"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Vi stopper når det ikke er flere features, ikke flere punkter å teste, eller maks dybde (hyperparameter) er nådd."
+    },
+    {
+     "n": 28,
+     "tag": "1.3",
+     "stem": "En løvnode har 7 punkter av klasse A og 3 av klasse B. Hva returnerer treet normalt?",
+     "options": [
+      {
+       "key": "A",
+       "text": "B, siden minoriteten må prioriteres"
+      },
+      {
+       "key": "B",
+       "text": "A, den dominerende klassen"
+      },
+      {
+       "key": "C",
+       "text": "Ingen prediksjon, treet må splittes videre"
+      },
+      {
+       "key": "D",
+       "text": "Gjennomsnittet 0,5"
+      }
+     ],
+     "answer": "B",
+     "explanation": "En blandet løvnode returnerer den dominerende klassen."
+    },
+    {
+     "n": 29,
+     "tag": "1.3",
+     "stem": "Hvilken modell er ikke-parametrisk?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Logistisk regresjon"
+      },
+      {
+       "key": "B",
+       "text": "Perseptron"
+      },
+      {
+       "key": "C",
+       "text": "Lineær regresjon"
+      },
+      {
+       "key": "D",
+       "text": "Beslutningstre"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Ved ikke-parametrisk modellering er formen ikke gitt, og treningen bygger strukturen."
+    },
+    {
+     "n": 30,
+     "tag": "1.3",
+     "stem": "Hvilken modelltype bør ha features av samme størrelsesorden (helst O(1))?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Regresjonsmodeller"
+      },
+      {
+       "key": "B",
+       "text": "Begge, likt"
+      },
+      {
+       "key": "C",
+       "text": "Ingen av dem"
+      },
+      {
+       "key": "D",
+       "text": "Beslutningstrær"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Trær trenger ikke feature scaling, men kan overtilpasse uten dybdegrense."
+    }
+   ]
+  },
+  {
+   "title": "Regresjon, validering og ensembler",
+   "quiz": [
+    {
+     "n": 1,
+     "tag": "1.4.1",
+     "stem": "Hvorfor står faktoren 1/2 i MSE = (1/2N)·Σ(y − f(x))²?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den gjør MSE konveks"
+      },
+      {
+       "key": "B",
+       "text": "Den korrigerer for støy"
+      },
+      {
+       "key": "C",
+       "text": "Den kansellerer eksponenten 2 ved derivasjon (bekvemmelighet)"
+      },
+      {
+       "key": "D",
+       "text": "Den holder MSE under 1"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Faktoren ½ er kun for bekvemmelighet og endrer ikke hvor minimum ligger."
+    },
+    {
+     "n": 2,
+     "tag": "1.4.1",
+     "stem": "En lineær regresjonsmodell har n features. Hvor mange parametre har den?",
+     "options": [
+      {
+       "key": "A",
+       "text": "2n"
+      },
+      {
+       "key": "B",
+       "text": "n + 2"
+      },
+      {
+       "key": "C",
+       "text": "n + 1"
+      },
+      {
+       "key": "D",
+       "text": "n"
+      }
+     ],
+     "answer": "C",
+     "explanation": "f(x) = β₀ + β₁x₁ + … + βₙxₙ. Med 5 features er det 6 parametre."
+    },
+    {
+     "n": 3,
+     "tag": "1.4.1",
+     "stem": "Targets er y = (1, 3) og prediksjonene f = (2, 1). Hva er MSE = (1/2N)·Σ(y − f)²?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,625"
+      },
+      {
+       "key": "B",
+       "text": "1,25"
+      },
+      {
+       "key": "C",
+       "text": "2,5"
+      },
+      {
+       "key": "D",
+       "text": "5"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Kvadrert feil: 1 og 4, sum 5. Med N = 2 er MSE = 5/(2·2) = 1,25."
+    },
+    {
+     "n": 4,
+     "tag": "1.4.1",
+     "stem": "Med f − y = (1, −2) for N = 2, β₀ = 1 og η = 0,1, hva blir β₀ etter ett steg β₀ ← β₀ − η·(1/N)·Σ(f − y)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,9"
+      },
+      {
+       "key": "B",
+       "text": "0,95"
+      },
+      {
+       "key": "C",
+       "text": "1,05"
+      },
+      {
+       "key": "D",
+       "text": "1,1"
+      }
+     ],
+     "answer": "C",
+     "explanation": "(1/N)·Σ(f − y) = −0,5, så β₀ = 1 − 0,1·(−0,5) = 1,05."
+    },
+    {
+     "n": 5,
+     "tag": "1.4.1",
+     "stem": "Hva er bias-leddet β₀ i lineær regresjon?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Stigningstallet til linja"
+      },
+      {
+       "key": "B",
+       "text": "Variansen til modellen"
+      },
+      {
+       "key": "C",
+       "text": "Funksjonsverdien når x₁ = 0"
+      },
+      {
+       "key": "D",
+       "text": "Tapet på treningsdata"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Leddet flytter alle prediksjoner med en konstant. Det er ikke det samme som bias i bias-varians-tradeoffen."
+    },
+    {
+     "n": 6,
+     "tag": "1.4.2",
+     "stem": "Hva er x → x² et eksempel på i feature engineering?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Feature extraction (å lage nye features)"
+      },
+      {
+       "key": "B",
+       "text": "Inferens"
+      },
+      {
+       "key": "C",
+       "text": "Preprocessing"
+      },
+      {
+       "key": "D",
+       "text": "Feature selection"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Selection velger ut features (f.eks. droppe Name), preprocessing skalerer (f.eks. Age), og extraction lager nye features."
+    },
+    {
+     "n": 7,
+     "tag": "1.4.3",
+     "stem": "Hvilket datasett brukes til å justere hyperparametre og monitorere modellen under trening?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Alle tre"
+      },
+      {
+       "key": "B",
+       "text": "Treningsdata"
+      },
+      {
+       "key": "C",
+       "text": "Testdata"
+      },
+      {
+       "key": "D",
+       "text": "Valideringsdata"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Trening tilpasser parametrene, validering justerer hyperparametre, og test brukes kun til endelig rapportering."
+    },
+    {
+     "n": 8,
+     "tag": "1.4.3",
+     "stem": "Hva er riktig om testdata?",
+     "options": [
+      {
+       "key": "A",
+       "text": "De brukes til å velge læringsrate"
+      },
+      {
+       "key": "B",
+       "text": "De er en del av treningen"
+      },
+      {
+       "key": "C",
+       "text": "De brukes til early stopping"
+      },
+      {
+       "key": "D",
+       "text": "De brukes kun til endelig rapportering av ytelse, uten tilpasning av noe"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Å bruke testdata til tilpasning gir et for optimistisk bilde av generalisering."
+    },
+    {
+     "n": 9,
+     "tag": "1.4.3",
+     "stem": "Treningstapet synker, men valideringstapet flater ut og stiger. Hva tyder det på?",
+     "options": [
+      {
+       "key": "A",
+       "text": "For lav læringsrate"
+      },
+      {
+       "key": "B",
+       "text": "Undertilpasning"
+      },
+      {
+       "key": "C",
+       "text": "God generalisering"
+      },
+      {
+       "key": "D",
+       "text": "Overtilpasning"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Modellen tilpasser seg treningsdata, ikke de underliggende sammenhengene."
+    },
+    {
+     "n": 10,
+     "tag": "1.4.3",
+     "stem": "Både trenings- og valideringstap flater ut på et høyt nivå. Hva tyder det på?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Undertilpasning"
+      },
+      {
+       "key": "B",
+       "text": "Datalekkasje"
+      },
+      {
+       "key": "C",
+       "text": "God generalisering"
+      },
+      {
+       "key": "D",
+       "text": "Overtilpasning"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Modellen klarer ikke fange sammenhengene i dataene (høy bias)."
+    },
+    {
+     "n": 11,
+     "tag": "1.4.3",
+     "stem": "Hva gjør early stopping?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Velger beste modell på testsettet"
+      },
+      {
+       "key": "B",
+       "text": "Stanser treningen når valideringstapet ikke har minket innenfor en toleranse de siste n epokene"
+      },
+      {
+       "key": "C",
+       "text": "Stanser når treningstapet er null"
+      },
+      {
+       "key": "D",
+       "text": "Stanser etter et fast antall epoker"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Da slipper vi å bestemme antall epoker på forhånd."
+    },
+    {
+     "n": 12,
+     "tag": "1.4.4",
+     "stem": "Datasettet har n = 100 punkter. Hvor mange ganger trenes modellen med LOOCV?",
+     "options": [
+      {
+       "key": "A",
+       "text": "10"
+      },
+      {
+       "key": "B",
+       "text": "100"
+      },
+      {
+       "key": "C",
+       "text": "1"
+      },
+      {
+       "key": "D",
+       "text": "99"
+      }
+     ],
+     "answer": "B",
+     "explanation": "LOOCV trener på n − 1 punkter og tester på ett, n ganger. Det er ressurskrevende."
+    },
+    {
+     "n": 13,
+     "tag": "1.4.4",
+     "stem": "Hvordan beregnes estimatet i k-fold kryssvalidering?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Som gjennomsnittet av de k testresultatene"
+      },
+      {
+       "key": "B",
+       "text": "Som summen av foldene"
+      },
+      {
+       "key": "C",
+       "text": "Som beste fold"
+      },
+      {
+       "key": "D",
+       "text": "Som resultatet fra siste fold"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Datasettet deles i k deler, og modellen tilpasses k ganger."
+    },
+    {
+     "n": 14,
+     "tag": "1.4.5",
+     "stem": "I bias-varians-dekomposisjonen E[(y − f)²] = Bias² + Var + σ², hva er σ²?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Modellens varians"
+      },
+      {
+       "key": "B",
+       "text": "Irredusibelt støy vi ikke kan fjerne"
+      },
+      {
+       "key": "C",
+       "text": "Modellkompleksiteten"
+      },
+      {
+       "key": "D",
+       "text": "Modellens bias"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Støyen i dataene setter en nedre grense for feilen."
+    },
+    {
+     "n": 15,
+     "tag": "1.4.5",
+     "stem": "For et punkt er Bias² = 3, varians = 2 og σ² = 1. Hva er forventet kvadratisk feil?",
+     "options": [
+      {
+       "key": "A",
+       "text": "6"
+      },
+      {
+       "key": "B",
+       "text": "9"
+      },
+      {
+       "key": "C",
+       "text": "5"
+      },
+      {
+       "key": "D",
+       "text": "4"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Feil = Bias² + Var + σ² = 3 + 2 + 1 = 6."
+    },
+    {
+     "n": 16,
+     "tag": "1.4.5",
+     "stem": "Hva kjennetegner en modell med høy varians?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den er for enkel og undertilpasser"
+      },
+      {
+       "key": "B",
+       "text": "Den er for sensitiv for fluktuasjoner og støy, og overtilpasser"
+      },
+      {
+       "key": "C",
+       "text": "Den bommer systematisk i samme retning"
+      },
+      {
+       "key": "D",
+       "text": "Den har ingen irredusibel støy"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Høy bias gir undertilpasning, høy varians gir overtilpasning."
+    },
+    {
+     "n": 17,
+     "tag": "1.4.5",
+     "stem": "Hva skjer typisk når du øker modellkompleksiteten?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Høyere bias og lavere varians"
+      },
+      {
+       "key": "B",
+       "text": "Lavere bias, men høyere varians"
+      },
+      {
+       "key": "C",
+       "text": "Ingen endring"
+      },
+      {
+       "key": "D",
+       "text": "Både lavere bias og lavere varians"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Dette er bias-varians-tradeoffen."
+    },
+    {
+     "n": 18,
+     "tag": "1.4.6",
+     "stem": "Hva predikerer et beslutningstre som brukes til regresjon i en løvnode?",
+     "options": [
+      {
+       "key": "A",
+       "text": "En sannsynlighet mellom 0 og 1"
+      },
+      {
+       "key": "B",
+       "text": "En lineær funksjon per region"
+      },
+      {
+       "key": "C",
+       "text": "Én verdi per region"
+      },
+      {
+       "key": "D",
+       "text": "En klasse"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Treet splitter datarommet i regioner og predikerer én verdi per region."
+    },
+    {
+     "n": 19,
+     "tag": "1.4.6",
+     "stem": "Hva skjer med et regresjonstre uten dybdegrense?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Det gir alltid lavest testfeil"
+      },
+      {
+       "key": "B",
+       "text": "Det undertilpasser"
+      },
+      {
+       "key": "C",
+       "text": "Det overtilpasser"
+      },
+      {
+       "key": "D",
+       "text": "Det blir en lineær modell"
+      }
+     ],
+     "answer": "C",
+     "explanation": "I notatene overtilpasset sklearns ubegrensede tre (dybde 12, 85 noder), mens dybde 2 ga lavest MSE."
+    },
+    {
+     "n": 20,
+     "tag": "1.5.1",
+     "stem": "Hva er bootstrapping?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Å trekke datapunkter med tilbakelegging, slik at samme punkt kan forekomme flere ganger"
+      },
+      {
+       "key": "B",
+       "text": "Å dele datasettet i k folder"
+      },
+      {
+       "key": "C",
+       "text": "Å fjerne outliers"
+      },
+      {
+       "key": "D",
+       "text": "Å trekke uten tilbakelegging"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Det gir mange ulike datasett fra ett og viser usikkerheten i estimatene."
+    },
+    {
+     "n": 21,
+     "tag": "1.5.1",
+     "stem": "Hvordan aggregeres prediksjonene i bagging for regresjon?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Gjennomsnittet av modellenes prediksjoner"
+      },
+      {
+       "key": "B",
+       "text": "Flertallsavstemning"
+      },
+      {
+       "key": "C",
+       "text": "Maksimum"
+      },
+      {
+       "key": "D",
+       "text": "Kun siste modell"
+      }
+     ],
+     "answer": "A",
+     "explanation": "For klassifisering brukes flertallsavstemning, eventuelt vektet."
+    },
+    {
+     "n": 22,
+     "tag": "1.5.1",
+     "stem": "Hva må til for at en random forest skal bli bedre enn enkelttrærne?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Alle trær må ha dybde 1"
+      },
+      {
+       "key": "B",
+       "text": "Trærne må være diverse og uavhengige"
+      },
+      {
+       "key": "C",
+       "text": "Alle trær trenes på samme data"
+      },
+      {
+       "key": "D",
+       "text": "Trærne må være identiske"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Random forest er bagging av trær trent på ulike bootstrap-utvalg og feature-utvalg."
+    },
+    {
+     "n": 23,
+     "tag": "1.5.2",
+     "stem": "Hvilken metode trener modellene sekvensielt, der hver bygger på feilene til de forrige?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Boosting"
+      },
+      {
+       "key": "B",
+       "text": "Bootstrapping"
+      },
+      {
+       "key": "C",
+       "text": "Bagging"
+      },
+      {
+       "key": "D",
+       "text": "Random forest"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Bagging trener parallelt og uavhengig."
+    },
+    {
+     "n": 24,
+     "tag": "1.5.2",
+     "stem": "Hva er et eksempel på en svak modell?",
+     "options": [
+      {
+       "key": "A",
+       "text": "En trestump"
+      },
+      {
+       "key": "B",
+       "text": "k-means med k = 100"
+      },
+      {
+       "key": "C",
+       "text": "Et nevralt nettverk med ti lag"
+      },
+      {
+       "key": "D",
+       "text": "En dyp random forest"
+      }
+     ],
+     "answer": "A",
+     "explanation": "En svak modell har prediksjoner som bare er svakt korrelert med target. Boosting kombinerer svake modeller til en sterk."
+    },
+    {
+     "n": 25,
+     "tag": "1.5.2",
+     "stem": "Hvordan starter vektene til datapunktene i AdaBoost?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Tilfeldige"
+      },
+      {
+       "key": "B",
+       "text": "Null"
+      },
+      {
+       "key": "C",
+       "text": "Like for alle punkter"
+      },
+      {
+       "key": "D",
+       "text": "Høyest for positive punkter"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Alle punkter starter med lik vekt."
+    },
+    {
+     "n": 26,
+     "tag": "1.5.2",
+     "stem": "Hva skjer med punktvektene etter hver modell i AdaBoost?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Vektene til de riktig klassifiserte økes"
+      },
+      {
+       "key": "B",
+       "text": "Alle vekter settes tilbake til like"
+      },
+      {
+       "key": "C",
+       "text": "Vektene fjernes"
+      },
+      {
+       "key": "D",
+       "text": "Vektene til punktene modellen har størst tap på økes"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Neste modell trenes på de omvektede dataene, og sluttprediksjonen er et vektet gjennomsnitt av modellene."
+    },
+    {
+     "n": 27,
+     "tag": "1.5.2",
+     "stem": "Hva predikerer hver ny modell i gradient boosting?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Vektene til observasjonene"
+      },
+      {
+       "key": "B",
+       "text": "Klassen til flertallet"
+      },
+      {
+       "key": "C",
+       "text": "Gjennomsnittet av treningsdata"
+      },
+      {
+       "key": "D",
+       "text": "Pseudo-residualene (label − forrige prediksjon)"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Gradient boosting vekter ikke observasjoner, hver modell retter opp feilen til ensemblet så langt."
+    },
+    {
+     "n": 28,
+     "tag": "1.5.2",
+     "stem": "Label er 10 og ensemblets forrige prediksjon er 7. Hva er pseudo-residualen (label − prediksjon) som neste modell skal predikere?",
+     "options": [
+      {
+       "key": "A",
+       "text": "17"
+      },
+      {
+       "key": "B",
+       "text": "−3"
+      },
+      {
+       "key": "C",
+       "text": "0,7"
+      },
+      {
+       "key": "D",
+       "text": "3"
+      }
+     ],
+     "answer": "D",
+     "explanation": "10 − 7 = 3."
+    },
+    {
+     "n": 29,
+     "tag": "1.5.3",
+     "stem": "Hva er inferens?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Å dele data i trening og test"
+      },
+      {
+       "key": "B",
+       "text": "Å bruke en ferdigtrent modell til å gjøre prediksjoner"
+      },
+      {
+       "key": "C",
+       "text": "Å tilpasse hyperparametre"
+      },
+      {
+       "key": "D",
+       "text": "Å trene en modell på nytt"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Skillet mellom trening og inferens er særlig synlig i ensemble learning."
+    },
+    {
+     "n": 30,
+     "tag": "1.4.6",
+     "stem": "Hvilken hyperparameter begrenser overtilpasning i et beslutningstre?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Learning rate"
+      },
+      {
+       "key": "B",
+       "text": "Batch size"
+      },
+      {
+       "key": "C",
+       "text": "Antall epoker"
+      },
+      {
+       "key": "D",
+       "text": "Maks dybde"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Maks tredybde er en hyperparameter som settes på forhånd."
+    }
+   ]
+  },
+  {
+   "title": "Nevrale nettverk og XAI",
+   "quiz": [
+    {
+     "n": 1,
+     "tag": "2.1",
+     "stem": "Hva beregner et perseptron (TLU)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "f(x) = σ(w·x) uten bias"
+      },
+      {
+       "key": "B",
+       "text": "f(x) = H(w·x + b), der H er Heaviside stegfunksjon"
+      },
+      {
+       "key": "C",
+       "text": "f(x) = argmax over klasser av w·x"
+      },
+      {
+       "key": "D",
+       "text": "f(x) = max(0, w·x)"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Det er en binær klassifikator der vektene (w, b) bestemmer hvilke x som aktiverer noden."
+    },
+    {
+     "n": 2,
+     "tag": "2.1",
+     "stem": "Hvorfor kan Heaviside-funksjonen ikke brukes med gradient descent?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den deriverte er 0 overalt og udefinert i ett punkt, så det finnes ingen gradient"
+      },
+      {
+       "key": "B",
+       "text": "Den er ikke definert for negative tall"
+      },
+      {
+       "key": "C",
+       "text": "Den er for treg å regne ut"
+      },
+      {
+       "key": "D",
+       "text": "Den gir verdier utenfor [0, 1]"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Uten gradient kan vi ikke bruke gradient descent."
+    },
+    {
+     "n": 3,
+     "tag": "2.1",
+     "stem": "Hva gjorde Rosenblatt for å trene et perseptron?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Brukte en vilkårlig tilfeldig søking"
+      },
+      {
+       "key": "B",
+       "text": "Brukte backpropagation med sigmoid"
+      },
+      {
+       "key": "C",
+       "text": "Utelot det deriverte leddet og brukte wᵢ ← wᵢ + η(yᵢ − ŷᵢ)"
+      },
+      {
+       "key": "D",
+       "text": "Brukte k-means til å finne vektene"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Perseptronregelen justerer vektene i forhold til feilen y − ŷ."
+    },
+    {
+     "n": 4,
+     "tag": "2.1",
+     "stem": "Hvilke vekter gir en AND-port med ett perseptron (w₁, w₂, b)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "(−1, −1, 1,5)"
+      },
+      {
+       "key": "B",
+       "text": "(1, 1, −0,5)"
+      },
+      {
+       "key": "C",
+       "text": "(1, 1, 0,5)"
+      },
+      {
+       "key": "D",
+       "text": "(1, 1, −1,5)"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Bare x = (1, 1) gir 1 + 1 − 1,5 = 0,5 ≥ 0. (1, 1, −0,5) gir OR."
+    },
+    {
+     "n": 5,
+     "tag": "2.1",
+     "stem": "Perseptron med vekter (1, 1) og b = −0,5: hvilken logisk port er det?",
+     "options": [
+      {
+       "key": "A",
+       "text": "OR"
+      },
+      {
+       "key": "B",
+       "text": "XOR"
+      },
+      {
+       "key": "C",
+       "text": "NOT"
+      },
+      {
+       "key": "D",
+       "text": "AND"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Alle input med minst én 1 gir ≥ 0, og kun (0, 0) gir −0,5 → 0."
+    },
+    {
+     "n": 6,
+     "tag": "2.1",
+     "stem": "Hvorfor kan ikke ett enkelt perseptron løse XOR?",
+     "options": [
+      {
+       "key": "A",
+       "text": "XOR har for mange inputs"
+      },
+      {
+       "key": "B",
+       "text": "XOR er ikke lineært separerbart"
+      },
+      {
+       "key": "C",
+       "text": "Heaviside gir bare negative verdier"
+      },
+      {
+       "key": "D",
+       "text": "Det mangler et bias-ledd"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Ett perseptron lager en lineær grense. XOR krever flere lag."
+    },
+    {
+     "n": 7,
+     "tag": "2.2",
+     "stem": "Hvilken aktiveringsfunksjon brukes typisk i skjulte lag?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Softmax"
+      },
+      {
+       "key": "B",
+       "text": "Ingen aktivering"
+      },
+      {
+       "key": "C",
+       "text": "ReLU"
+      },
+      {
+       "key": "D",
+       "text": "Heaviside"
+      }
+     ],
+     "answer": "C",
+     "explanation": "ReLU(x) = max(0, x). Softmax brukes i output ved flerklasse, sigmoid i output ved binær klassifikasjon."
+    },
+    {
+     "n": 8,
+     "tag": "2.2",
+     "stem": "Hvilken aktivering brukes i output-laget ved regresjon?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Sigmoid"
+      },
+      {
+       "key": "B",
+       "text": "Ingen (lineær aktivering)"
+      },
+      {
+       "key": "C",
+       "text": "ReLU"
+      },
+      {
+       "key": "D",
+       "text": "Softmax"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Output skal kunne være et hvilket som helst tall."
+    },
+    {
+     "n": 9,
+     "tag": "2.2",
+     "stem": "Hvorfor har nevrale nettverk ikke-lineære, deriverbare aktiveringsfunksjoner?",
+     "options": [
+      {
+       "key": "A",
+       "text": "For å spare minne"
+      },
+      {
+       "key": "B",
+       "text": "For å unngå bruk av bias"
+      },
+      {
+       "key": "C",
+       "text": "Ikke-lineariteten gir lærbare feature-transformasjoner, og deriverbarhet muliggjør gradient descent"
+      },
+      {
+       "key": "D",
+       "text": "For at alle noder skal gi samme output"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Uten ikke-linearitet ville mange lag kollapset til én lineær transformasjon."
+    },
+    {
+     "n": 10,
+     "tag": "2.3",
+     "stem": "Et nettverk skal klassifisere bilder med 784 features i 10 klasser med softmax. Hvor mange noder har input- og output-laget?",
+     "options": [
+      {
+       "key": "A",
+       "text": "10 og 784"
+      },
+      {
+       "key": "B",
+       "text": "1 og 10"
+      },
+      {
+       "key": "C",
+       "text": "784 og 10"
+      },
+      {
+       "key": "D",
+       "text": "784 og 1"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Input-laget har like mange noder som features, output-laget like mange som klasser."
+    },
+    {
+     "n": 11,
+     "tag": "2.3",
+     "stem": "Et Dense-lag med 8 noder følger etter en input med 5 features. Hvor mange parametre har laget?",
+     "options": [
+      {
+       "key": "A",
+       "text": "48"
+      },
+      {
+       "key": "B",
+       "text": "40"
+      },
+      {
+       "key": "C",
+       "text": "13"
+      },
+      {
+       "key": "D",
+       "text": "45"
+      }
+     ],
+     "answer": "A",
+     "explanation": "5·8 = 40 vekter + 8 bias = 48."
+    },
+    {
+     "n": 12,
+     "tag": "2.3",
+     "stem": "Hva stemmer om et fully connected feed-forward nettverk (MLP)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Hver node er koblet til bare én node i neste lag"
+      },
+      {
+       "key": "B",
+       "text": "Noder i samme lag er koblet til hverandre"
+      },
+      {
+       "key": "C",
+       "text": "Informasjonen går begge veier"
+      },
+      {
+       "key": "D",
+       "text": "Alle noder er koblet til forrige og neste lag, og informasjonen går bare fremover"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Det er ingen koblinger mellom noder i samme lag."
+    },
+    {
+     "n": 13,
+     "tag": "2.4",
+     "stem": "Hva gjør backpropagation?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Propagerer feilen bakover lag for lag (kjerneregelen) for å finne gradientene til alle vekter og bias"
+      },
+      {
+       "key": "B",
+       "text": "Velger læringsraten automatisk"
+      },
+      {
+       "key": "C",
+       "text": "Fjerner skjulte lag"
+      },
+      {
+       "key": "D",
+       "text": "Finner globalt optimum direkte"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Det fungerer også i skjulte lag der vi ikke kjenner den riktige verdien."
+    },
+    {
+     "n": 14,
+     "tag": "2.5",
+     "stem": "Et nettverk trenes på N = 500 punkter. Hvor mange parameteroppdateringer gir én epoke med ren SGD (ett punkt om gangen)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "500"
+      },
+      {
+       "key": "B",
+       "text": "50"
+      },
+      {
+       "key": "C",
+       "text": "5"
+      },
+      {
+       "key": "D",
+       "text": "1"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Full-batch GD gir 1 oppdatering per epoke, SGD gir N, og mini-batch SGD gir N/B."
+    },
+    {
+     "n": 15,
+     "tag": "2.5",
+     "stem": "Hva kjennetegner en liten batch size?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Ingen oppdateringer per epoke"
+      },
+      {
+       "key": "B",
+       "text": "Rask, men støyete gradient"
+      },
+      {
+       "key": "C",
+       "text": "Svært presis, men treg gradient"
+      },
+      {
+       "key": "D",
+       "text": "Alltid bedre generalisering"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Stor batch gir mer presis, men dyrere gradient."
+    },
+    {
+     "n": 16,
+     "tag": "5.1",
+     "stem": "Hva er forskjellen på tolkbarhet og forklarbarhet?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Forklarbarhet er en egenskap ved lineære modeller"
+      },
+      {
+       "key": "B",
+       "text": "De betyr det samme"
+      },
+      {
+       "key": "C",
+       "text": "Tolkbarhet krever alltid SHAP"
+      },
+      {
+       "key": "D",
+       "text": "Tolkbarhet er en passiv egenskap ved modellen, mens forklarbarhet legger til funksjonalitet for å forklare et system"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Lineær regresjon er tolkbar. En svart boks må forklares post-hoc."
+    },
+    {
+     "n": 17,
+     "tag": "5.1",
+     "stem": "En forklaring som gjelder ett enkelt datapunkt kalles:",
+     "options": [
+      {
+       "key": "A",
+       "text": "Lokal"
+      },
+      {
+       "key": "B",
+       "text": "Kalibrert"
+      },
+      {
+       "key": "C",
+       "text": "Modellspesifikk"
+      },
+      {
+       "key": "D",
+       "text": "Global"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Global gjelder hele modellen."
+    },
+    {
+     "n": 18,
+     "tag": "5.1",
+     "stem": "Hva kjennetegner en modellagnostisk forklaringsmetode?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den krever tilgang til vektene"
+      },
+      {
+       "key": "B",
+       "text": "Den trenger bare input og output fra modellen"
+      },
+      {
+       "key": "C",
+       "text": "Den virker kun for nevrale nettverk"
+      },
+      {
+       "key": "D",
+       "text": "Den bruker modellens gradienter"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Modellspesifikke metoder bruker parametre, arkitektur eller gradienter."
+    },
+    {
+     "n": 19,
+     "tag": "5.2",
+     "stem": "Hva er Shapley-verdien φᵢ til spiller i?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Det maksimale bidraget til i"
+      },
+      {
+       "key": "B",
+       "text": "Verdien v({i}) alene"
+      },
+      {
+       "key": "C",
+       "text": "Gjennomsnittlig marginalt bidrag over alle koalisjoner uten i"
+      },
+      {
+       "key": "D",
+       "text": "Summen av alle andre spilleres bidrag"
+      }
+     ],
+     "answer": "C",
+     "explanation": "φᵢ er et vektet gjennomsnitt av v(S ∪ {i}) − v(S)."
+    },
+    {
+     "n": 20,
+     "tag": "5.2",
+     "stem": "Spill med v({}) = 0, v({1}) = 2, v({2}) = 6 og v({1,2}) = 12. Hva er φ₁?",
+     "options": [
+      {
+       "key": "A",
+       "text": "2"
+      },
+      {
+       "key": "B",
+       "text": "6"
+      },
+      {
+       "key": "C",
+       "text": "5"
+      },
+      {
+       "key": "D",
+       "text": "4"
+      }
+     ],
+     "answer": "D",
+     "explanation": "φ₁ = ½·(2 − 0) + ½·(12 − 6) = 1 + 3 = 4. Da er φ₂ = 8, og summen er 12."
+    },
+    {
+     "n": 21,
+     "tag": "5.2",
+     "stem": "Hva sier effektivitetsaksiomet i Shapley?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Verdiene er uavhengige av v"
+      },
+      {
+       "key": "B",
+       "text": "Spillere uten bidrag får høyest verdi"
+      },
+      {
+       "key": "C",
+       "text": "Shapley-verdiene summerer til verdien av storkoalisjonen"
+      },
+      {
+       "key": "D",
+       "text": "Alle spillere får lik verdi"
+      }
+     ],
+     "answer": "C",
+     "explanation": "De fire aksiomene er symmetri, effektivitet, nullspiller og additivitet."
+    },
+    {
+     "n": 22,
+     "tag": "5.2",
+     "stem": "Hvilken Shapley-verdi får en spiller som ikke bidrar til noen koalisjon?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0"
+      },
+      {
+       "key": "B",
+       "text": "1"
+      },
+      {
+       "key": "C",
+       "text": "Gjennomsnittet av de andre"
+      },
+      {
+       "key": "D",
+       "text": "Negativ"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Dette er nullspiller-aksiomet."
+    },
+    {
+     "n": 23,
+     "tag": "5.2",
+     "stem": "I SHAP, hva tilsvarer spillerne i Shapley-spillet?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Featurene til modellen"
+      },
+      {
+       "key": "B",
+       "text": "Datapunktene"
+      },
+      {
+       "key": "C",
+       "text": "Klassene"
+      },
+      {
+       "key": "D",
+       "text": "Epokene"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Koalisjon = delmengde av features, spillet = modellen."
+    },
+    {
+     "n": 24,
+     "tag": "5.2",
+     "stem": "I SHAP er φ₀ = 0,4, og SHAP-verdiene for tre features er +0,3, −0,1 og +0,2. Hva er prediksjonen f(x*)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,6"
+      },
+      {
+       "key": "B",
+       "text": "0,8"
+      },
+      {
+       "key": "C",
+       "text": "0,4"
+      },
+      {
+       "key": "D",
+       "text": "1,2"
+      }
+     ],
+     "answer": "B",
+     "explanation": "f(x*) = φ₀ + Σφⱼ = 0,4 + 0,4 = 0,8. φ₀ er gjennomsnittsprediksjonen over bakgrunnsdata."
+    },
+    {
+     "n": 25,
+     "tag": "5.2",
+     "stem": "Hvorfor er eksakt Shapley-beregning problematisk for 30 features?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den krever 30 koalisjoner"
+      },
+      {
+       "key": "B",
+       "text": "Den krever 30! koalisjoner"
+      },
+      {
+       "key": "C",
+       "text": "Den krever 2³⁰ koalisjoner (over en milliard)"
+      },
+      {
+       "key": "D",
+       "text": "Den virker bare for under 10 features"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Antall koalisjoner er 2^|N|, så SHAP bruker tilnærminger."
+    },
+    {
+     "n": 26,
+     "tag": "5.2",
+     "stem": "Hvilken begrensning har SHAP når bakgrunnsdata brukes for fraværende features?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den trenger modellens gradienter"
+      },
+      {
+       "key": "B",
+       "text": "Den antar uavhengige features, som kan gi kombinasjoner modellen aldri har sett"
+      },
+      {
+       "key": "C",
+       "text": "Den virker bare for lineære modeller"
+      },
+      {
+       "key": "D",
+       "text": "Den gir alltid samme verdi for alle features"
+      }
+     ],
+     "answer": "B",
+     "explanation": "For korrelerte features kan det gi urealistiske datapunkter."
+    },
+    {
+     "n": 27,
+     "tag": "5.2",
+     "stem": "Hva viser et SHAP force plot?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Gjennomsnittlig importance for alle datapunkter"
+      },
+      {
+       "key": "B",
+       "text": "Klynger i datasettet"
+      },
+      {
+       "key": "C",
+       "text": "Fordelingen av labels"
+      },
+      {
+       "key": "D",
+       "text": "Ett datapunkt: hvordan hver feature trekker prediksjonen opp eller ned fra φ₀ til f(x*)"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Beeswarm viser ett punkt per datapunkt per feature."
+    },
+    {
+     "n": 28,
+     "tag": "5.2",
+     "stem": "Hva vises på x-aksen i et SHAP beeswarm-plot?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Modellens tap"
+      },
+      {
+       "key": "B",
+       "text": "Featureverdien"
+      },
+      {
+       "key": "C",
+       "text": "Datapunktnummer"
+      },
+      {
+       "key": "D",
+       "text": "SHAP-verdien"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Featureverdien vises som farge, og features sorteres etter gjennomsnittlig absolutt SHAP."
+    },
+    {
+     "n": 29,
+     "tag": "5.3",
+     "stem": "Hvilke labels får de tilfeldige punktene som LIME genererer rundt x?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Klasselabels fra k-means"
+      },
+      {
+       "key": "B",
+       "text": "De opprinnelige datalabelene"
+      },
+      {
+       "key": "C",
+       "text": "Tilfeldige labels"
+      },
+      {
+       "key": "D",
+       "text": "Modellens prediksjon f(xᵢ), ikke datalabels"
+      }
+     ],
+     "answer": "D",
+     "explanation": "LIME tilpasser en tolkbar surrogatmodell g lokalt rundt x."
+    },
+    {
+     "n": 30,
+     "tag": "5.3",
+     "stem": "Hvilken av metodene kan gi ulike forklaringer ved to kjøringer på samme datapunkt?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Ingen av dem"
+      },
+      {
+       "key": "B",
+       "text": "LIME, på grunn av tilfeldig sampling"
+      },
+      {
+       "key": "C",
+       "text": "Begge alltid"
+      },
+      {
+       "key": "D",
+       "text": "SHAP, fordi den bruker aksiomer"
+      }
+     ],
+     "answer": "B",
+     "explanation": "SHAP bygger på Shapley-aksiomer og effektivitet, men er dyr å regne eksakt. LIME har ingen formell garanti."
+    }
+   ]
+  },
+  {
+   "title": "Uveiledet læring: clustering, PCA og anomalier",
+   "quiz": [
+    {
+     "n": 1,
+     "tag": "3.1",
+     "stem": "Hva er likhetsmålet i k-means og i DBSCAN?",
+     "options": [
+      {
+       "key": "A",
+       "text": "k-means bruker tetthet, DBSCAN bruker avstand"
+      },
+      {
+       "key": "B",
+       "text": "Begge bruker klasselabels"
+      },
+      {
+       "key": "C",
+       "text": "Begge bruker tetthet"
+      },
+      {
+       "key": "D",
+       "text": "k-means bruker avstand, DBSCAN bruker tetthet"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Clustering er uveiledet «klassifisering uten labels»."
+    },
+    {
+     "n": 2,
+     "tag": "3.1",
+     "stem": "Hva er riktig rekkefølge i k-means?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Beregn kovarians, finn egenvektorer, projiser"
+      },
+      {
+       "key": "B",
+       "text": "Velg sentroider, tildel punkter til nærmeste sentroide, oppdater sentroidene til middelverdien, gjenta"
+      },
+      {
+       "key": "C",
+       "text": "Oppdater sentroider, velg k, tildel punkter"
+      },
+      {
+       "key": "D",
+       "text": "Tildel punkter, fjern outliers, velg k"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Vi gjentar til klyngene ikke endrer seg."
+    },
+    {
+     "n": 3,
+     "tag": "3.1",
+     "stem": "Hva er kvadrert euklidsk avstand d² mellom punktene (1, 2) og (4, 6)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "49"
+      },
+      {
+       "key": "B",
+       "text": "5"
+      },
+      {
+       "key": "C",
+       "text": "7"
+      },
+      {
+       "key": "D",
+       "text": "25"
+      }
+     ],
+     "answer": "D",
+     "explanation": "d² = (1 − 4)² + (2 − 6)² = 9 + 16 = 25."
+    },
+    {
+     "n": 4,
+     "tag": "3.1",
+     "stem": "En klynge har punktene (1, 1), (3, 5) og (5, 0). Hva blir den nye sentroiden?",
+     "options": [
+      {
+       "key": "A",
+       "text": "(3, 2)"
+      },
+      {
+       "key": "B",
+       "text": "(3, 3)"
+      },
+      {
+       "key": "C",
+       "text": "(2, 3)"
+      },
+      {
+       "key": "D",
+       "text": "(1, 5)"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Middelverdi: x = (1 + 3 + 5)/3 = 3 og y = (1 + 5 + 0)/3 = 2."
+    },
+    {
+     "n": 5,
+     "tag": "3.1",
+     "stem": "Hvorfor er lav inertia alene en dårlig måte å velge k på?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den avhenger ikke av k"
+      },
+      {
+       "key": "B",
+       "text": "Den er alltid 0"
+      },
+      {
+       "key": "C",
+       "text": "Den blir lavest med størst mulig k (én sentroide per punkt)"
+      },
+      {
+       "key": "D",
+       "text": "Den måler bare outliers"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Inertia er summen av kvadrert avstand mellom punkter og deres sentroide."
+    },
+    {
+     "n": 6,
+     "tag": "3.1",
+     "stem": "Et punkt har midlere avstand a = 2 innad i egen klynge og b = 8 til nærmeste andre klynge. Hva er silhouette-verdien (b − a)/max(a, b)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,75"
+      },
+      {
+       "key": "B",
+       "text": "0,25"
+      },
+      {
+       "key": "C",
+       "text": "4"
+      },
+      {
+       "key": "D",
+       "text": "0,6"
+      }
+     ],
+     "answer": "A",
+     "explanation": "(8 − 2)/8 = 0,75. Nær 1 er best."
+    },
+    {
+     "n": 7,
+     "tag": "3.1",
+     "stem": "Hva betyr en silhouette-verdi nær 0?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Perfekt klynge"
+      },
+      {
+       "key": "B",
+       "text": "Punktet er en outlier"
+      },
+      {
+       "key": "C",
+       "text": "Klyngene overlapper, eller punktet ligger på randen mellom to klynger"
+      },
+      {
+       "key": "D",
+       "text": "Punktet er i feil klynge"
+      }
+     ],
+     "answer": "C",
+     "explanation": "−1 betyr feil klynge."
+    },
+    {
+     "n": 8,
+     "tag": "3.1",
+     "stem": "Hva betyr en høy Calinski–Harabasz-score?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Tette og godt separerte klynger"
+      },
+      {
+       "key": "B",
+       "text": "Mange outliers"
+      },
+      {
+       "key": "C",
+       "text": "Overlappende klynger"
+      },
+      {
+       "key": "D",
+       "text": "Høy inertia"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Scoren er forholdet mellom avstand mellom klynger og avstand innad i klynger."
+    },
+    {
+     "n": 9,
+     "tag": "3.1",
+     "stem": "Hvordan velger k-means++ neste sentroide?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Med sannsynlighet proporsjonal med kvadrert avstand til nærmeste eksisterende sentroide"
+      },
+      {
+       "key": "B",
+       "text": "Helt tilfeldig"
+      },
+      {
+       "key": "C",
+       "text": "Som middelverdien av alle punkter"
+      },
+      {
+       "key": "D",
+       "text": "Alltid punktet lengst unna"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Det gir spredning, men med litt tilfeldighet."
+    },
+    {
+     "n": 10,
+     "tag": "3.1",
+     "stem": "Hvilken av disse er en svakhet ved k-means?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den trenger ikke k"
+      },
+      {
+       "key": "B",
+       "text": "Den fungerer bedre jo flere dimensjoner"
+      },
+      {
+       "key": "C",
+       "text": "Følsom for valg av k og svak mot outliers"
+      },
+      {
+       "key": "D",
+       "text": "Den merker outliers automatisk"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Euklidsk avstand konvergerer mot en konstant i høye dimensjoner."
+    },
+    {
+     "n": 11,
+     "tag": "3.1",
+     "stem": "Hva er ε i DBSCAN?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Maks avstand mellom to punkter for at de skal regnes som naboer"
+      },
+      {
+       "key": "B",
+       "text": "Minimum antall punkter totalt"
+      },
+      {
+       "key": "C",
+       "text": "Antall klynger"
+      },
+      {
+       "key": "D",
+       "text": "Læringsraten"
+      }
+     ],
+     "answer": "A",
+     "explanation": "min_samples er minimum antall naboer for et kjernepunkt."
+    },
+    {
+     "n": 12,
+     "tag": "3.1",
+     "stem": "Et punkt ligger innenfor ε av et kjernepunkt, men har selv for få naboer. Hva er det i DBSCAN?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Et ikke-kjernepunkt (utkant), som ikke utvider klyngen"
+      },
+      {
+       "key": "B",
+       "text": "En sentroide"
+      },
+      {
+       "key": "C",
+       "text": "En outlier"
+      },
+      {
+       "key": "D",
+       "text": "Et kjernepunkt"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Outliers er punkter som ikke tilhører noen klynge."
+    },
+    {
+     "n": 13,
+     "tag": "3.1",
+     "stem": "Hvilken metode krever at du oppgir antall klynger k på forhånd?",
+     "options": [
+      {
+       "key": "A",
+       "text": "DBSCAN"
+      },
+      {
+       "key": "B",
+       "text": "Begge"
+      },
+      {
+       "key": "C",
+       "text": "k-means"
+      },
+      {
+       "key": "D",
+       "text": "Ingen av dem"
+      }
+     ],
+     "answer": "C",
+     "explanation": "DBSCAN trenger ε og min_samples, ikke k."
+    },
+    {
+     "n": 14,
+     "tag": "3.1",
+     "stem": "Hvilken clustering-kategori hører DBSCAN til?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Sentroidebasert"
+      },
+      {
+       "key": "B",
+       "text": "Hierarkibasert"
+      },
+      {
+       "key": "C",
+       "text": "Fordelingsbasert"
+      },
+      {
+       "key": "D",
+       "text": "Tetthetsbasert"
+      }
+     ],
+     "answer": "D",
+     "explanation": "De fire kategoriene er sentroidebasert, tetthetsbasert, fordelingsbasert og hierarkibasert."
+    },
+    {
+     "n": 15,
+     "tag": "3.1",
+     "stem": "Hva skjer med avstander mellom punkter i høye dimensjoner (concentration of distances)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Forskjellene blir enorme"
+      },
+      {
+       "key": "B",
+       "text": "Avstandene blir null"
+      },
+      {
+       "key": "C",
+       "text": "Ingen endring"
+      },
+      {
+       "key": "D",
+       "text": "Avstandene blir store, men de relative forskjellene små"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Flere datapunkter løser ikke problemet, men dimensjonsreduksjon kan hjelpe."
+    },
+    {
+     "n": 16,
+     "tag": "3.2",
+     "stem": "Hvilket av disse er IKKE en vanlig grunn til dimensjonsreduksjon?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Visualisering"
+      },
+      {
+       "key": "B",
+       "text": "Å øke antall datapunkter"
+      },
+      {
+       "key": "C",
+       "text": "Støyfjerning"
+      },
+      {
+       "key": "D",
+       "text": "Preprosessering mot dimensjonsforbannelsen"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Dimensjonsreduksjon reduserer antall features, ikke antall punkter."
+    },
+    {
+     "n": 17,
+     "tag": "3.2",
+     "stem": "Hva er PC1 i PCA?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Aksen med flest outliers"
+      },
+      {
+       "key": "B",
+       "text": "Aksen med minst varians"
+      },
+      {
+       "key": "C",
+       "text": "Aksen som maksimerer variansen i dataene"
+      },
+      {
+       "key": "D",
+       "text": "Den første featuren i datasettet"
+      }
+     ],
+     "answer": "C",
+     "explanation": "PC2 har nest mest varians og er ortogonal til PC1."
+    },
+    {
+     "n": 18,
+     "tag": "3.2",
+     "stem": "Hva er hovedkomponentene matematisk?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Gradientene til tapet"
+      },
+      {
+       "key": "B",
+       "text": "Entropien til hver feature"
+      },
+      {
+       "key": "C",
+       "text": "Sentroidene til klyngene"
+      },
+      {
+       "key": "D",
+       "text": "Egenvektorene til kovariansmatrisen"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Egenverdien er variansen langs aksen, og komponentene er ortogonale."
+    },
+    {
+     "n": 19,
+     "tag": "3.2",
+     "stem": "x₁ = (2, 4, 6) og x₂ = (1, 2, 3). Hva er cov(x₁, x₂) med 1/(N − 1)·Σ(x₁ − x̄₁)(x₂ − x̄₂)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "8"
+      },
+      {
+       "key": "B",
+       "text": "2"
+      },
+      {
+       "key": "C",
+       "text": "1"
+      },
+      {
+       "key": "D",
+       "text": "4"
+      }
+     ],
+     "answer": "B",
+     "explanation": "x̄₁ = 4 og x̄₂ = 2. Summen er (−2)(−1) + 0 + (2)(1) = 4, og 4/2 = 2."
+    },
+    {
+     "n": 20,
+     "tag": "3.2",
+     "stem": "Kovariansmatrisen til et datasett har egenverdiene 9 og 1. Hvor stor andel av variansen forklarer PC1?",
+     "options": [
+      {
+       "key": "A",
+       "text": "9 %"
+      },
+      {
+       "key": "B",
+       "text": "90 %"
+      },
+      {
+       "key": "C",
+       "text": "10 %"
+      },
+      {
+       "key": "D",
+       "text": "50 %"
+      }
+     ],
+     "answer": "B",
+     "explanation": "9/(9 + 1) = 0,9."
+    },
+    {
+     "n": 21,
+     "tag": "3.2",
+     "stem": "Hvordan bruker du PCA riktig med trenings- og testdata?",
+     "options": [
+      {
+       "key": "A",
+       "text": "pca.fit på alle data før splitt"
+      },
+      {
+       "key": "B",
+       "text": "pca.fit separat på hvert sett"
+      },
+      {
+       "key": "C",
+       "text": "pca.fit på treningsdata og pca.transform på testdata"
+      },
+      {
+       "key": "D",
+       "text": "pca.fit på testdata"
+      }
+     ],
+     "answer": "C",
+     "explanation": "PCA lager nye basisvektorer og kan gjenbrukes på nye datapunkter."
+    },
+    {
+     "n": 22,
+     "tag": "3.2",
+     "stem": "Når fungerer PCA dårlig?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Når det er få features"
+      },
+      {
+       "key": "B",
+       "text": "Når features er ukorrelerte"
+      },
+      {
+       "key": "C",
+       "text": "Når dataene ligger nær en rett linje"
+      },
+      {
+       "key": "D",
+       "text": "Når strukturen i dataene er ikke-lineær, som for MNIST ned til 2 dimensjoner"
+      }
+     ],
+     "answer": "D",
+     "explanation": "PCA fanger bare lineær struktur."
+    },
+    {
+     "n": 23,
+     "tag": "3.2",
+     "stem": "Hva minimerer t-SNE?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Variansen langs hovedkomponentene"
+      },
+      {
+       "key": "B",
+       "text": "KL-divergensen mellom nabo-sannsynligheter i høy og lav dimensjon"
+      },
+      {
+       "key": "C",
+       "text": "Gini impurity"
+      },
+      {
+       "key": "D",
+       "text": "Inertia"
+      }
+     ],
+     "answer": "B",
+     "explanation": "D_KL(P‖Q) = Σ P(x)·log(P(x)/Q(x))."
+    },
+    {
+     "n": 24,
+     "tag": "3.2",
+     "stem": "Hva er riktig om KL-divergensen?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den er ikke-symmetrisk og ikke-negativ"
+      },
+      {
+       "key": "B",
+       "text": "Den er alltid 1"
+      },
+      {
+       "key": "C",
+       "text": "Den kan være negativ"
+      },
+      {
+       "key": "D",
+       "text": "Den er symmetrisk"
+      }
+     ],
+     "answer": "A",
+     "explanation": "D_KL(P‖Q) ≠ D_KL(Q‖P)."
+    },
+    {
+     "n": 25,
+     "tag": "3.2",
+     "stem": "Hvilken av PCA og t-SNE kan ikke brukes direkte på nye datapunkter, og passer best til visualisering?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Begge"
+      },
+      {
+       "key": "B",
+       "text": "Ingen av dem"
+      },
+      {
+       "key": "C",
+       "text": "t-SNE"
+      },
+      {
+       "key": "D",
+       "text": "PCA"
+      }
+     ],
+     "answer": "C",
+     "explanation": "t-SNE er treg og ikke-parametrisk. PCA er lineær, rask og gjenbrukbar."
+    },
+    {
+     "n": 26,
+     "tag": "3.2",
+     "stem": "Hva er perplexity i t-SNE intuitivt?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Antall iterasjoner"
+      },
+      {
+       "key": "B",
+       "text": "Det effektive antallet naboer hvert punkt bryr seg om"
+      },
+      {
+       "key": "C",
+       "text": "Læringsraten"
+      },
+      {
+       "key": "D",
+       "text": "Antall dimensjoner i output"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Det angir entropien til den betingede Gaussen i høy dimensjon."
+    },
+    {
+     "n": 27,
+     "tag": "3.3",
+     "stem": "Hvorfor behandles anomalideteksjon ofte som uveiledet læring?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Fordi anomalier alltid er labelet"
+      },
+      {
+       "key": "B",
+       "text": "Vi har mange normale eksempler, men få eller ingen anomalier, og vet ikke hvordan avviket ser ut"
+      },
+      {
+       "key": "C",
+       "text": "Fordi vi har like mange normale og anomale punkter"
+      },
+      {
+       "key": "D",
+       "text": "Fordi modellen bruker en tapsfunksjon uten data"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Det blir klassifisering uten labels og med ekstrem skjevfordeling."
+    },
+    {
+     "n": 28,
+     "tag": "3.3",
+     "stem": "Hva kjennetegner anomalier i Isolation Forest?",
+     "options": [
+      {
+       "key": "A",
+       "text": "De er lette å isolere og får kort gjennomsnittlig avstand fra rotnoden"
+      },
+      {
+       "key": "B",
+       "text": "De ligger langt nede i trærne"
+      },
+      {
+       "key": "C",
+       "text": "De havner alltid i største klynge"
+      },
+      {
+       "key": "D",
+       "text": "De har høyest entropi"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Anomalier er få og ulike, og havner nær roten."
+    },
+    {
+     "n": 29,
+     "tag": "3.3",
+     "stem": "Hvilken label får outliers i DBSCAN?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0"
+      },
+      {
+       "key": "B",
+       "text": "−1"
+      },
+      {
+       "key": "C",
+       "text": "NaN"
+      },
+      {
+       "key": "D",
+       "text": "1"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Outliers kan hentes med dbscan.labels_ == -1."
+    },
+    {
+     "n": 30,
+     "tag": "3.3",
+     "stem": "Hva angir hyperparameteren contamination i Isolation Forest?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Maks dybde"
+      },
+      {
+       "key": "B",
+       "text": "Antall trær"
+      },
+      {
+       "key": "C",
+       "text": "Læringsraten"
+      },
+      {
+       "key": "D",
+       "text": "Anslått andel anomale datapunkter"
+      }
+     ],
+     "answer": "D",
+     "explanation": "n_estimators er antall isolasjonstrær."
+    }
+   ]
+  },
+  {
+   "title": "Forsterkningslæring og DQN",
+   "quiz": [
+    {
+     "n": 1,
+     "tag": "4.1",
+     "stem": "Hva gir environment til agenten i RL-loopen etter at agenten har valgt en action?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Kun en ny state"
+      },
+      {
+       "key": "B",
+       "text": "En ferdigtrent policy"
+      },
+      {
+       "key": "C",
+       "text": "Kun en reward"
+      },
+      {
+       "key": "D",
+       "text": "En reward og en ny state"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Loopen gjentas, og agenten skal maksimere forventet kumulativ reward."
+    },
+    {
+     "n": 2,
+     "tag": "4.1",
+     "stem": "Hva baserer agenten valget av action Aₜ på?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Hele historien til alle states"
+      },
+      {
+       "key": "B",
+       "text": "Rewarden Rₜ₊₁"
+      },
+      {
+       "key": "C",
+       "text": "Neste state Sₜ₊₁"
+      },
+      {
+       "key": "D",
+       "text": "Nåværende state Sₜ"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Dette følger av Markov-egenskapen."
+    },
+    {
+     "n": 3,
+     "tag": "4.1",
+     "stem": "Hva sier Markov-egenskapen?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Fremtidig tilstand avhenger bare av nåværende state og action, ikke av historien"
+      },
+      {
+       "key": "B",
+       "text": "Reward er alltid positiv"
+      },
+      {
+       "key": "C",
+       "text": "Alle states er like sannsynlige"
+      },
+      {
+       "key": "D",
+       "text": "Fremtiden avhenger av hele historien"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Miljøet er «memoryless»."
+    },
+    {
+     "n": 4,
+     "tag": "4.1",
+     "stem": "Hva består en MDP av?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Kun states og actions"
+      },
+      {
+       "key": "B",
+       "text": "Input, skjulte lag og output"
+      },
+      {
+       "key": "C",
+       "text": "Q-tabell og policy"
+      },
+      {
+       "key": "D",
+       "text": "States, actions, transisjonssannsynlighet og umiddelbar reward"
+      }
+     ],
+     "answer": "D",
+     "explanation": "En MDP er en 4-tuple (S, A, P_A, R_A). Kurset holder seg til deterministiske miljøer."
+    },
+    {
+     "n": 5,
+     "tag": "4.2",
+     "stem": "Hva er en policy π(A|S)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Måten agenten velger action ut fra state"
+      },
+      {
+       "key": "B",
+       "text": "Summen av alle rewards"
+      },
+      {
+       "key": "C",
+       "text": "En tapsfunksjon"
+      },
+      {
+       "key": "D",
+       "text": "Sannsynligheten for å vinne"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Målet er en optimal policy som maksimerer kumulativ reward."
+    },
+    {
+     "n": 6,
+     "tag": "4.2",
+     "stem": "Hva er forskjellen på reward og Q-verdi?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Reward er alltid summen av alle Q-verdier"
+      },
+      {
+       "key": "B",
+       "text": "De er det samme"
+      },
+      {
+       "key": "C",
+       "text": "Reward er umiddelbar tilbakemelding fra environment, Q er forventet kumulativ fremtidig reward som må læres"
+      },
+      {
+       "key": "D",
+       "text": "Q-verdien kommer fra environment, reward læres"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Q(S, A) er forventet reward av å gjøre A i S og følge policyen videre."
+    },
+    {
+     "n": 7,
+     "tag": "4.2",
+     "stem": "Q(S, A) = 1, R = 0, max Q(S′, ·) = 2, α = 0,5 og γ = 0,9. Hva blir Q_new?",
+     "options": [
+      {
+       "key": "A",
+       "text": "1,8"
+      },
+      {
+       "key": "B",
+       "text": "1,4"
+      },
+      {
+       "key": "C",
+       "text": "0,9"
+      },
+      {
+       "key": "D",
+       "text": "2,4"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Q_new = 0,5·1 + 0,5·(0 + 0,9·2) = 0,5 + 0,9 = 1,4."
+    },
+    {
+     "n": 8,
+     "tag": "4.2",
+     "stem": "Q(S, A) = 3 og spillet er over (done) med R = 10. Hva blir Q_new med α = 0,1 og γ = 0,9?",
+     "options": [
+      {
+       "key": "A",
+       "text": "4,0"
+      },
+      {
+       "key": "B",
+       "text": "3,7"
+      },
+      {
+       "key": "C",
+       "text": "3,0"
+      },
+      {
+       "key": "D",
+       "text": "10"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Fremtidsleddet er 0, så Q_new = 0,9·3 + 0,1·10 = 3,7."
+    },
+    {
+     "n": 9,
+     "tag": "4.2",
+     "stem": "Q(S, A) = 5, R = 1, γ = 0,5 og max Q(S′, ·) = 6. Hva blir Q_new når α = 1?",
+     "options": [
+      {
+       "key": "A",
+       "text": "5"
+      },
+      {
+       "key": "B",
+       "text": "6"
+      },
+      {
+       "key": "C",
+       "text": "4"
+      },
+      {
+       "key": "D",
+       "text": "3,5"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Med α = 1 forsvinner gammel Q: Q_new = R + γ·max Q = 1 + 0,5·6 = 4."
+    },
+    {
+     "n": 10,
+     "tag": "4.2",
+     "stem": "Hva skjer med Q-verdien hvis α = 0?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Den settes til R"
+      },
+      {
+       "key": "B",
+       "text": "Den endres aldri, agenten lærer ingenting"
+      },
+      {
+       "key": "C",
+       "text": "Den blir uendelig"
+      },
+      {
+       "key": "D",
+       "text": "Den settes til 0"
+      }
+     ],
+     "answer": "B",
+     "explanation": "α er vekten på ny informasjon mot gammel Q-verdi."
+    },
+    {
+     "n": 11,
+     "tag": "4.2",
+     "stem": "Hva betyr en discount factor γ nær 0?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Fremtidige rewards teller nesten ikke, agenten er kortsynt"
+      },
+      {
+       "key": "B",
+       "text": "Agenten utforsker alltid"
+      },
+      {
+       "key": "C",
+       "text": "Læringsraten er null"
+      },
+      {
+       "key": "D",
+       "text": "Agenten teller bare fremtidige rewards"
+      }
+     ],
+     "answer": "A",
+     "explanation": "γ vekter fremtidige mot tidlige rewards."
+    },
+    {
+     "n": 12,
+     "tag": "4.3",
+     "stem": "Hva er ε (exploration factor) i ε-greedy?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Discount factor"
+      },
+      {
+       "key": "B",
+       "text": "Læringsraten"
+      },
+      {
+       "key": "C",
+       "text": "Antall epoker"
+      },
+      {
+       "key": "D",
+       "text": "Sannsynligheten for å velge en tilfeldig action"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Med sannsynlighet 1 − ε velges action med høyest Q-verdi."
+    },
+    {
+     "n": 13,
+     "tag": "4.3",
+     "stem": "Med ε = 0,1 i ε-greedy, med hvilken sannsynlighet utnytter (exploit) agenten den beste kjente actionen?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,9"
+      },
+      {
+       "key": "B",
+       "text": "0,1"
+      },
+      {
+       "key": "C",
+       "text": "1,0"
+      },
+      {
+       "key": "D",
+       "text": "0,5"
+      }
+     ],
+     "answer": "A",
+     "explanation": "1 − ε = 0,9 for exploit, ellers explore."
+    },
+    {
+     "n": 14,
+     "tag": "4.3",
+     "stem": "Hvorfor holdes ε over en liten minimumsverdi ε_min > 0 under epsilon decay?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Fordi ε aldri kan bli null i datamaskiner"
+      },
+      {
+       "key": "B",
+       "text": "Selv en trent agent kan trenge et tilfeldig dytt"
+      },
+      {
+       "key": "C",
+       "text": "For å unngå null i tapet"
+      },
+      {
+       "key": "D",
+       "text": "For å gjøre læringen raskere"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Det finnes ingen universell balanse mellom exploration og exploitation."
+    },
+    {
+     "n": 15,
+     "tag": "4.3",
+     "stem": "Hva er exploration–exploitation-tradeoffen?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Valget mellom train og test"
+      },
+      {
+       "key": "B",
+       "text": "Valget av α og γ"
+      },
+      {
+       "key": "C",
+       "text": "Valget mellom to nettverk"
+      },
+      {
+       "key": "D",
+       "text": "Balansen mellom å prøve nye actions og å bruke det man har lært"
+      }
+     ],
+     "answer": "D",
+     "explanation": "ε starter høy og reduseres (ε ← ε·decay)."
+    },
+    {
+     "n": 16,
+     "tag": "4.4",
+     "stem": "Hva kan et DQN som en Q-tabell ikke gjør?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Bruke rewards"
+      },
+      {
+       "key": "B",
+       "text": "Velge actions"
+      },
+      {
+       "key": "C",
+       "text": "Estimere Q-verdier også for states agenten aldri har vært i"
+      },
+      {
+       "key": "D",
+       "text": "Oppdatere Q-verdier"
+      }
+     ],
+     "answer": "C",
+     "explanation": "DQN er en funksjonsapproksimator. Q-tabellen oppdaterer én verdi eksakt."
+    },
+    {
+     "n": 17,
+     "tag": "4.4",
+     "stem": "Hva representerer hver output-node i et DQN?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Q-verdien for en bestemt action"
+      },
+      {
+       "key": "B",
+       "text": "Rewarden fra environment"
+      },
+      {
+       "key": "C",
+       "text": "En state"
+      },
+      {
+       "key": "D",
+       "text": "Sannsynligheten for å vinne"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Frozen Lake har 4 output-noder, én Q-verdi per action."
+    },
+    {
+     "n": 18,
+     "tag": "4.5",
+     "stem": "Hvorfor er DQN-trening ustabil?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Fordi ε er for høy"
+      },
+      {
+       "key": "B",
+       "text": "Alle vekter oppdateres samtidig, så targetens Q-verdier endres hele tiden (bevegelig mål)"
+      },
+      {
+       "key": "C",
+       "text": "Fordi det ikke finnes noen reward"
+      },
+      {
+       "key": "D",
+       "text": "Fordi Q-tabellen blir for stor"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Targeten inneholder fremtidige Q-verdier fra samme nettverk."
+    },
+    {
+     "n": 19,
+     "tag": "4.5",
+     "stem": "Hva er et target network?",
+     "options": [
+      {
+       "key": "A",
+       "text": "En kopi av Q-nettverket som oppdateres sjeldnere og gir et stabilt mål"
+      },
+      {
+       "key": "B",
+       "text": "Et nettverk som genererer states"
+      },
+      {
+       "key": "C",
+       "text": "Et nettverk som lagrer rewards"
+      },
+      {
+       "key": "D",
+       "text": "Et nettverk som velger ε"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Det gir en stabil policy under treningen."
+    },
+    {
+     "n": 20,
+     "tag": "4.5",
+     "stem": "Hva lagres i replay buffer?",
+     "options": [
+      {
+       "key": "A",
+       "text": "(state, action, reward, ny state, done)"
+      },
+      {
+       "key": "B",
+       "text": "Bare Q-verdier"
+      },
+      {
+       "key": "C",
+       "text": "Vektene til nettverket"
+      },
+      {
+       "key": "D",
+       "text": "Bare rewards"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Tilfeldige batcher trekkes under trening."
+    },
+    {
+     "n": 21,
+     "tag": "4.5",
+     "stem": "Hvordan trekkes data fra replay buffer under trening?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Kun elementer med høy reward"
+      },
+      {
+       "key": "B",
+       "text": "Tilfeldige batcher"
+      },
+      {
+       "key": "C",
+       "text": "Alltid de eldste elementene"
+      },
+      {
+       "key": "D",
+       "text": "Alltid de nyeste elementene"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Tilfeldig trekking bryter korrelasjonen mellom påfølgende steg."
+    },
+    {
+     "n": 22,
+     "tag": "4.5",
+     "stem": "Hva er catastrophic forgetting i DQN?",
+     "options": [
+      {
+       "key": "A",
+       "text": "ε settes tilbake til 1"
+      },
+      {
+       "key": "B",
+       "text": "Reward kollapser fordi nettverket overtilpasser seg nylige hendelser og glemmer tidligere læring"
+      },
+      {
+       "key": "C",
+       "text": "Replay buffer blir full"
+      },
+      {
+       "key": "D",
+       "text": "Q-tabellen blir slettet"
+      }
+     ],
+     "answer": "B",
+     "explanation": "Det er et tegn på ustabil trening."
+    },
+    {
+     "n": 23,
+     "tag": "4.5",
+     "stem": "DQN-target y = r + γ·max Q_target(s′, ·). Med r = 1, γ = 0,9 og max Q_target(s′, ·) = 5, hva er y (ikke done)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "6"
+      },
+      {
+       "key": "B",
+       "text": "4,5"
+      },
+      {
+       "key": "C",
+       "text": "5,5"
+      },
+      {
+       "key": "D",
+       "text": "1"
+      }
+     ],
+     "answer": "C",
+     "explanation": "y = 1 + 0,9·5 = 5,5."
+    },
+    {
+     "n": 24,
+     "tag": "4.5",
+     "stem": "Samme DQN-situasjon, men spillet er over (done). Hva er y?",
+     "options": [
+      {
+       "key": "A",
+       "text": "5"
+      },
+      {
+       "key": "B",
+       "text": "5,5"
+      },
+      {
+       "key": "C",
+       "text": "1"
+      },
+      {
+       "key": "D",
+       "text": "0"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Fremtidsleddet er 0 når done, så y = r = 1."
+    },
+    {
+     "n": 25,
+     "tag": "4.5",
+     "stem": "Hva er loss i DQN?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Cross-entropy mellom to actions"
+      },
+      {
+       "key": "B",
+       "text": "Avstanden til nærmeste sentroide"
+      },
+      {
+       "key": "C",
+       "text": "MSE mellom target y og Q-nettverkets prediksjon for den utførte actionen"
+      },
+      {
+       "key": "D",
+       "text": "Gini impurity"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Backpropagation oppdaterer så Q-nettverket."
+    },
+    {
+     "n": 26,
+     "tag": "4.5",
+     "stem": "Hvilket nettverk brukes til å beregne max Q(s′, ·) i targeten?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Target network"
+      },
+      {
+       "key": "B",
+       "text": "Et nytt tilfeldig nettverk"
+      },
+      {
+       "key": "C",
+       "text": "Replay buffer"
+      },
+      {
+       "key": "D",
+       "text": "Policy network"
+      }
+     ],
+     "answer": "A",
+     "explanation": "Q-nettverket oppdateres, og target network kopieres fra det sjeldnere."
+    },
+    {
+     "n": 27,
+     "tag": "4.5",
+     "stem": "Hva er den viktigste forskjellen på en Q-tabell og et DQN ved oppdatering?",
+     "options": [
+      {
+       "key": "A",
+       "text": "DQN bruker ikke reward"
+      },
+      {
+       "key": "B",
+       "text": "Det er ingen forskjell"
+      },
+      {
+       "key": "C",
+       "text": "Q-tabellen oppdaterer én verdi eksakt, DQN justerer vekter som påvirker mange Q-verdier"
+      },
+      {
+       "key": "D",
+       "text": "Q-tabellen bruker backpropagation"
+      }
+     ],
+     "answer": "C",
+     "explanation": "Derfor kan DQN generalisere, men blir også ustabilt."
+    },
+    {
+     "n": 28,
+     "tag": "4.2",
+     "stem": "Hvorfor settes fremtidsleddet til 0 når done = true?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Fordi state er ugyldig"
+      },
+      {
+       "key": "B",
+       "text": "Fordi γ er 0"
+      },
+      {
+       "key": "C",
+       "text": "Fordi α er 0"
+      },
+      {
+       "key": "D",
+       "text": "Spillet er over, så det finnes ingen fremtidig reward"
+      }
+     ],
+     "answer": "D",
+     "explanation": "Dette gjelder både i Q-learning og i DQN-targeten."
+    },
+    {
+     "n": 29,
+     "tag": "4.3",
+     "stem": "ε starter på 1,0 og multipliseres med decay = 0,9 etter hver episode. Hva er ε etter tre episoder (ε_min er lavere)?",
+     "options": [
+      {
+       "key": "A",
+       "text": "0,7"
+      },
+      {
+       "key": "B",
+       "text": "0,729"
+      },
+      {
+       "key": "C",
+       "text": "0,81"
+      },
+      {
+       "key": "D",
+       "text": "0,9"
+      }
+     ],
+     "answer": "B",
+     "explanation": "1,0 · 0,9³ = 0,729."
+    },
+    {
+     "n": 30,
+     "tag": "4.1",
+     "stem": "Hva er agentens mål i forsterkningslæring?",
+     "options": [
+      {
+       "key": "A",
+       "text": "Å maksimere umiddelbar reward i hvert steg"
+      },
+      {
+       "key": "B",
+       "text": "Å minimere treningstapet på labels"
+      },
+      {
+       "key": "C",
+       "text": "Å finne klynger i states"
+      },
+      {
+       "key": "D",
+       "text": "Å maksimere forventet kumulativ reward"
+      }
+     ],
+     "answer": "D",
+     "explanation": "En optimal policy maksimerer kumulativ reward, ikke bare umiddelbar reward."
+    }
+   ]
+  }
+ ]
+}

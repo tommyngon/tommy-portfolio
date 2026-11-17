@@ -1,54 +1,36 @@
-// Raw WebGL2 renderer for the home page's ending: the pinned name turns into a red stone and
-// back. Own code. One full-screen fragment shader ray-marches a signed distance field that is
-// a blend of two shapes:
-//   - the name, as a slab extruded from a 2D distance field of the very letters on the page
-//     (drawn with the same font at the same positions, so frame one matches the live text);
-//   - a knapped stone: a convex block of tilted planes, a few shallow scallops cut into it
-//     (like flint) and fine grit near the surface.
-// Mixing the two distance fields gives a true metamorphosis: the letters swell, run together
-// and harden into facets. Lit by a lagging point light that follows the pointer, with a
-// scatter of facets ("shards") catching the light around it.
+// Raw WebGL2 renderer for the home page's ending: one polished red stone on a transparent square
+// canvas. Own code. A single full-screen fragment shader traces a convex block of planes whose
+// edges are rounded by a smooth maximum (log-sum-exp), so every facet is a clean plane and every
+// edge a soft bevel. Because the shape is convex, the field is convex along each ray: the closest
+// approach is found by bisecting its slope and the surface by Newton steps from the entry side.
+// That gives an exact, noise-free silhouette with analytic coverage and an analytic normal, and
+// no ray-march speckle at grazing angles.
 //
-// Nothing here runs until the page asks for it: the module is imported once the ending is
-// close, the shaders compile in the background (KHR_parallel_shader_compile where available)
-// and the canvas only draws when something has changed.
-
-export type NameLayout = {
-  family: string; // computed font-family of the live letters
-  weight: string;
-  letters: { ch: string; x: number }[]; // left edge of each glyph box, em from the box's left
-  width: number; // em
-  baseline: number; // em from the box's top (the box is 1em tall: line-height 1)
-};
+// The material is band-limited on purpose: slow, domain-warped banding and a couple of thin pale
+// veins in the colour, a very gentle undulation in the normal, nothing finer than a pixel, so the
+// stone stays calm while it turns. Lit by a soft studio key, fill and rim, a procedural studio
+// environment for the polish, and a small warm light that follows the pointer.
+//
+// The shader compiles in the background (KHR_parallel_shader_compile where available) and the
+// canvas only draws when asked.
 
 export type StoneFrame = {
-  vw: number; // canvas css px
-  vh: number;
-  cx: number; // object centre, css px from the canvas's top-left
-  cy: number;
-  font: number; // css px per em of the name
-  stone: number; // css px per stone unit (the stone is about two units across)
-  morph: number; // 0 name .. 1 stone
-  squeeze: number; // horizontal scale of the name (1 = as set)
-  depth: number; // half depth of the letters, em
-  swell: number; // em the letters grow by as they run together
-  blend: number; // 0..1, from the letters' field to the stone's
-  yaw: number;
-  pitch: number;
-  roll: number;
-  lightX: number; // css px, the point light's position over the page
-  lightY: number;
-  shards: number; // 0..1, facets catching the light around the pointer
-  flat: number; // 1 = the name's flat red, 0 = fully lit
-  glow: number; // 0..1, the name's halo
-  alpha: number; // overall opacity (cross-fades with the live text)
-  u: number; // the page's unit, 100vw / 1470, for the halo radii
+  size: number; // css px, the canvas is a square of this side; the stone is centred in it
+  unit: number; // css px per stone unit; the stone stays inside a radius of 1.4 units
+  rot: Float32Array; // 3x3 rotation, column-major, object -> world
+  lightX: number; // css px from the canvas's left edge, where the pointer light hovers
+  lightY: number; // css px from the canvas's top edge
+  light: number; // 0..1, how present the pointer light is
+  form: number; // 0 a small soft bead .. 1 the finished faceted stone
+  alpha: number; // overall opacity
 };
 
-const NP = 24; // stone planes
-const NS = 3; // scallops
-const TEX_EM = 160; // texels per em in the name's distance field
-const PAD = 0.4; // em of empty margin around the name in that field
+const NP = 22; // planes
+const CAM = 7; // camera distance, stone units: a long lens, only a hint of perspective
+const REACH = 1.38; // the sharp block's farthest corner (the rounded stone lies within it), under the 1.4 promised
+const BEAD = 0.35; // radius of the bead at form 0, units
+const SEED = 29; // picks the stone
+const PILLOW = 0.88; // the finished stone keeps a tenth of the sphere, so its faces are gently domed, as tumbled
 
 const VERT = `#version 300 es
 in vec2 a_pos;
@@ -56,366 +38,300 @@ void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }`;
 
 const FRAG = `#version 300 es
 precision highp float;
-precision highp sampler2D;
+precision highp int;
 #define NP ${NP}
-#define NS ${NS}
-uniform vec2 u_vp;
-uniform float u_dpr;
-uniform float u_focal;
-uniform vec3 u_center;
+uniform vec2 u_res;      // backing px
+uniform float u_px;      // units per backing px on the plane through the centre
+uniform float u_cam;
 uniform mat3 u_rot;
-uniform vec3 u_box;
-uniform float u_font;
-uniform float u_stone;
-uniform float u_morph;
-uniform float u_squeeze;
-uniform float u_depth;
-uniform vec4 u_mix;      // swell (px), blend from the letters to the stone (0..1)
-uniform sampler2D u_sdf;
-uniform vec4 u_tex;      // min.xy, size.xy of the field, em (y up)
-uniform float u_pad;
-uniform vec4 u_planes[NP];
-uniform vec4 u_scoops[NS];
-uniform vec3 u_aniso;
-uniform float u_lip;
-uniform vec3 u_light;
-uniform vec3 u_cursor;   // world xy, z = amount
-uniform float u_flat;
-uniform float u_glow;
-uniform vec3 u_glowR;    // halo radii, px
+uniform vec4 u_pl[NP];   // planes in the stone's own space: unit normal, offset
+uniform vec4 u_shape;    // scale, bead radius (own space), sphere -> planes, edge softness
+uniform float u_tex;     // how much of the banding shows
+uniform vec3 u_lp;       // pointer light, world units
+uniform float u_light;
 uniform float u_alpha;
 out vec4 o;
 
-float hash13(vec3 p) {
-  p = fract(p * 0.1031);
-  p += dot(p, p.zyx + 31.32);
-  return fract((p.x + p.y) * p.z);
+// ---- noise: integer hash, gradient noise with its derivatives -----------------------------
+
+uint mix32(uint h) {
+  h ^= h >> 15u;
+  h *= 0x2c1b3c6du;
+  h ^= h >> 12u;
+  h *= 0x297a2d39u;
+  h ^= h >> 15u;
+  return h;
 }
-vec3 hash33(vec3 p) {
-  p = fract(p * vec3(0.1031, 0.1030, 0.0973));
-  p += dot(p, p.yxz + 33.33);
-  return fract((p.xxy + p.yxx) * p.zyx);
+// one hash per lattice corner, its bits split into the three components of the gradient
+vec3 grad(ivec3 c) {
+  uvec3 u = uvec3(c);
+  uint h = mix32(u.x * 0x8da6b343u ^ u.y * 0xd8163841u ^ u.z * 0xcb1ab31fu);
+  return vec3(uvec3(h, h >> 10u, h >> 20u) & 1023u) * (2.0 / 1023.0) - 1.0;
 }
-float vnoise(vec3 p) {
-  vec3 i = floor(p);
+// value in about -1..1, then d/dx, d/dy, d/dz
+vec4 gnoise(vec3 p) {
+  ivec3 i = ivec3(floor(p));
   vec3 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  float a = mix(hash13(i), hash13(i + vec3(1, 0, 0)), f.x);
-  float b = mix(hash13(i + vec3(0, 1, 0)), hash13(i + vec3(1, 1, 0)), f.x);
-  float c = mix(hash13(i + vec3(0, 0, 1)), hash13(i + vec3(1, 0, 1)), f.x);
-  float d = mix(hash13(i + vec3(0, 1, 1)), hash13(i + vec3(1, 1, 1)), f.x);
-  return mix(mix(a, b, f.y), mix(c, d, f.y), f.z);
+  vec3 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  vec3 du = 30.0 * f * f * (f * (f - 2.0) + 1.0);
+  vec3 ga = grad(i), gb = grad(i + ivec3(1, 0, 0)), gc = grad(i + ivec3(0, 1, 0)), gd = grad(i + ivec3(1, 1, 0));
+  vec3 ge = grad(i + ivec3(0, 0, 1)), gf = grad(i + ivec3(1, 0, 1)), gg = grad(i + ivec3(0, 1, 1)), gh = grad(i + ivec3(1, 1, 1));
+  float va = dot(ga, f), vb = dot(gb, f - vec3(1, 0, 0)), vc = dot(gc, f - vec3(0, 1, 0)), vd = dot(gd, f - vec3(1, 1, 0));
+  float ve = dot(ge, f - vec3(0, 0, 1)), vf = dot(gf, f - vec3(1, 0, 1)), vg = dot(gg, f - vec3(0, 1, 1)), vh = dot(gh, f - vec3(1, 1, 1));
+  float k1 = vb - va, k2 = vc - va, k3 = ve - va, k4 = va - vb - vc + vd;
+  float k5 = va - vc - ve + vg, k6 = va - vb - ve + vf, k7 = -va + vb + vc - vd + ve - vf - vg + vh;
+  float v = va + u.x * k1 + u.y * k2 + u.z * k3 + u.x * u.y * k4 + u.y * u.z * k5 + u.z * u.x * k6 + u.x * u.y * u.z * k7;
+  vec3 g = ga + u.x * (gb - ga) + u.y * (gc - ga) + u.z * (ge - ga) + u.x * u.y * (ga - gb - gc + gd)
+         + u.y * u.z * (ga - gc - ge + gg) + u.z * u.x * (ga - gb - ge + gf) + u.x * u.y * u.z * (-ga + gb + gc - gd + ge - gf - gg + gh);
+  g += du * vec3(k1 + u.y * k4 + u.z * k6 + u.y * u.z * k7, k2 + u.z * k5 + u.x * k4 + u.z * u.x * k7, k3 + u.x * k6 + u.y * k5 + u.x * u.y * k7);
+  return vec4(v * 1.6, g * 1.6);
 }
 
-// the name's 2D distance, em (negative inside); outside the field, the distance to its edge
-// plus the margin is a safe lower bound
-// (squared length for the test: length() of a zero vector is not reliably zero on every GPU)
-float text2D(vec2 e) {
-  vec2 uv = (e - u_tex.xy) / u_tex.zw;
-  vec2 c = clamp(uv, 0.0, 1.0);
-  float d = textureLod(u_sdf, vec2(c.x, 1.0 - c.y), 0.0).r;
-  vec2 off = (uv - c) * u_tex.zw;
-  float o2 = dot(off, off);
-  return o2 > 1e-12 ? sqrt(o2) + u_pad : d;
+// ---- the shape ------------------------------------------------------------------------------
+
+// The stone in its own space: a smooth maximum of the planes, blended with a sphere for the
+// bead. Both parts are convex, so the blend is too. Returns the field and its gradient.
+float field(vec3 p, out vec3 g) {
+  float r = max(length(p), 1e-6);
+  float fs = r - u_shape.y;
+  vec3 gs = p / r;
+  if (u_shape.z <= 0.0) { g = gs; return fs; }
+  // log-sum-exp taken relative to the sphere's value, which stays within about half a unit of
+  // the largest plane anywhere the field is asked, so the exponentials never overflow
+  float ik = 1.0 / u_shape.w;
+  float sum = 0.0;
+  vec3 gp = vec3(0.0);
+  for (int i = 0; i < NP; i++) {
+    float e = exp((dot(p, u_pl[i].xyz) - u_pl[i].w - fs) * ik);
+    sum += e;
+    gp += e * u_pl[i].xyz;
+  }
+  float fp = fs + u_shape.w * log(sum);
+  g = mix(gs, gp / sum, u_shape.z);
+  return mix(fs, fp, u_shape.z);
 }
 
-// the letters as a slab whose front face lies on z = 0, px
-float textD(vec3 p) {
-  vec3 e = p / u_font;
-  e.x /= u_squeeze;
-  e.z += u_depth;
-  float d2 = text2D(e.xy);
-  float r = min(0.03, u_depth * 0.5);
-  vec2 w = vec2(d2 + r, abs(e.z) - u_depth + r);
-  float d = min(max(w.x, w.y), 0.0) + length(max(w, 0.0)) - r;
-  return d * u_font * u_squeeze;
+// the span of the ray where the field can be below e: inside the sphere or the sharp block,
+// both grown by e (the field is a blend of two parts, each at least the sharp version of itself)
+vec2 span(vec3 ro, vec3 rd, float e) {
+  float b = dot(ro, rd);
+  float R = u_shape.y + e;
+  float c = dot(ro, ro) - R * R;
+  float h = b * b - c;
+  vec2 ts = h > 0.0 ? vec2(-b - sqrt(h), -b + sqrt(h)) : vec2(1e9, -1e9);
+  if (u_shape.z <= 0.0) return ts;
+  vec2 tp = vec2(-1e9, 1e9);
+  for (int i = 0; i < NP; i++) {
+    float dn = dot(u_pl[i].xyz, rd);
+    float dist = u_pl[i].w + e - dot(u_pl[i].xyz, ro);
+    if (abs(dn) < 1e-6) { if (dist < 0.0) tp = vec2(1e9, -1e9); }
+    else if (dn > 0.0) tp.y = min(tp.y, dist / dn);
+    else tp.x = max(tp.x, dist / dn);
+  }
+  if (u_shape.z >= 1.0) return tp;
+  if (tp.x > tp.y) return ts;
+  if (ts.x > ts.y) return tp;
+  return vec2(min(ts.x, tp.x), max(ts.y, tp.y));
 }
 
-float stoneBase(vec3 q) {
-  vec3 a = q / u_aniso;
-  float d = -1e5;
-  for (int i = 0; i < NP; i++) d = max(d, dot(a, u_planes[i].xyz) - u_planes[i].w);
-  d *= u_lip;
-  for (int i = 0; i < NS; i++) d = max(d, u_scoops[i].w - length(q - u_scoops[i].xyz));
-  return d;
+// ---- light ----------------------------------------------------------------------------------
+
+float ggx(float ndh, float a) {
+  float a2 = a * a;
+  float d = ndh * ndh * (a2 - 1.0) + 1.0;
+  return a2 / (3.14159 * d * d);
+}
+float vis(float ndl, float ndv, float a) {
+  float k = a * 0.5;
+  return 0.25 / ((ndl * (1.0 - k) + k) * (ndv * (1.0 - k) + k));
 }
 
-// stone units in, px out
-float stoneD(vec3 p) {
-  vec3 q = p / u_stone;
-  float d = stoneBase(q);
-  if (d < 0.08) d += (vnoise(q * 7.0) - 0.5) * 0.022 + (vnoise(q * 21.0) - 0.5) * 0.008;
-  return d * u_stone;
+// a soft rectangle of light in direction c, half extents w (tangent of the angle), softness s
+float softbox(vec3 r, vec3 c, vec3 up, vec2 w, float s) {
+  float z = dot(r, c);
+  if (z <= 0.05) return 0.0;
+  vec3 x = normalize(cross(up, c));
+  vec3 y = cross(c, x);
+  vec2 q = abs(vec2(dot(r, x), dot(r, y)) / z);
+  vec2 e = 1.0 - smoothstep(w - s, w + s, q);
+  return e.x * e.y * smoothstep(0.05, 0.3, z);
 }
 
-// The metamorphosis: the letters draw together, thicken and swell, and the field slides from
-// theirs to the stone's; squeezed to fit inside the stone first, no letter is cut off on the way.
-float map(vec3 p) {
-  if (u_morph <= 0.0) return textD(p);
-  if (u_morph >= 1.0) return stoneD(p);
-  float a = textD(p) - u_mix.x;
-  float b = stoneD(p);
-  // mid-way the surface breathes a little, so the change reads as material, not a cross-fade
-  float w = sin(3.14159 * u_mix.y);
-  float n = (vnoise(p / u_stone * 2.4 + 7.0) - 0.5) * 0.06 * u_stone * w;
-  return mix(a, b, u_mix.y) + n;
+// a dark studio with a big softbox up-left, a strip to the right and a faint one above
+vec3 studio(vec3 r, float rough) {
+  float s = 0.04 + rough * 0.45;
+  vec3 c = mix(vec3(0.006, 0.005, 0.005), vec3(0.028, 0.027, 0.026), smoothstep(-0.5, 0.9, r.y));
+  c += vec3(1.0, 0.94, 0.86) * 4.0 * softbox(r, normalize(vec3(-0.62, 0.55, 0.56)), vec3(0, 1, 0), vec2(0.5, 0.36), s);
+  c += vec3(0.95, 0.95, 0.95) * 0.35 * softbox(r, normalize(vec3(0.9, 0.05, 0.25)), vec3(0, 1, 0), vec2(0.05, 0.9), s);
+  c += vec3(1.0) * 0.2 * softbox(r, normalize(vec3(0.1, 1.0, -0.15)), vec3(0, 0, 1), vec2(0.7, 0.5), s * 1.5);
+  return c;
 }
 
-vec3 normalAt(vec3 p, float h) {
-  const vec2 k = vec2(1.0, -1.0);
-  return normalize(k.xyy * map(p + k.xyy * h) + k.yyx * map(p + k.yyx * h) +
-                   k.yxy * map(p + k.yxy * h) + k.xxx * map(p + k.xxx * h));
+// ---- the stone's colour ---------------------------------------------------------------------
+
+// a thin line where x crosses zero, widened (and dimmed to keep its weight) once it is finer
+// than the pixel's footprint fw, so it never breaks up
+float vein(float x, float w, float fw) {
+  float ww = max(w, fw * 1.2);
+  return (1.0 - smoothstep(ww * 0.4, ww, abs(x))) * (w / ww);
 }
 
-vec2 boxHit(vec3 ro, vec3 rd, vec3 b) {
-  vec3 m = 1.0 / rd;
-  vec3 n = m * ro;
-  vec3 k = abs(m) * b;
-  vec3 t1 = -n - k;
-  vec3 t2 = -n + k;
-  return vec2(max(max(t1.x, t1.y), t1.z), min(min(t2.x, t2.y), t2.z));
+// colour in rgb; in w, a slow change in the polish (a little duller here and there). fw is a
+// pixel's footprint on the surface (worked out rather than taken from screen derivatives,
+// which are not to be trusted next to pixels that have already returned)
+vec4 albedo(vec3 q, float fw) {
+  vec4 n1 = gnoise(q * 0.9 + vec3(3.1, 7.7, 1.3));
+  vec3 wq = q + n1.yzw * 0.16;
+  vec4 n2 = gnoise(wq * 1.9 + vec3(11.0, 2.0, 5.0));
+  wq += n2.yzw * 0.05;
+  // banding: layers of slightly different red, bent by the warp, irregular in width, with a
+  // broad darker layer and a few thin lighter ones
+  float ph = dot(wq, normalize(vec3(0.35, 1.0, 0.2))) * 7.0 + n2.x * 1.6;
+  float layer = sin(ph) + 0.55 * sin(ph * 2.3 + 1.7 + n1.x * 2.0);
+  float band = smoothstep(-0.45, 0.45, layer);
+  float dark = smoothstep(0.65, 0.95, sin(ph * 0.37 + 0.8));
+  float lift = 1.0 - smoothstep(-1.35, -0.95, layer);
+  // a finer mottle, faded out well before it nears the size of a pixel
+  vec3 fq = wq * 7.0 + vec3(0.0, 4.0, 0.0);
+  float mott = gnoise(fq).x * (1.0 - smoothstep(0.12, 0.4, 7.0 * fw));
+  float v = band * 0.24 + dark * 0.3 + (0.5 - 0.5 * n1.x) * 0.1 + mott * 0.08;
+  vec3 deep = vec3(0.16, 0.003, 0.005);
+  vec3 red = vec3(0.43, 0.0045, 0.006);
+  vec3 a = mix(red, deep, clamp(v, -0.2, 1.0) * u_tex);
+  a = mix(a, vec3(0.53, 0.01, 0.01), lift * 0.45 * u_tex);
+  // a thin pale vein or two, nearly straight (a gentler warp, so they never close into rings),
+  // each showing only along part of its length
+  vec3 vq = q + n1.yzw * 0.05;
+  float v1 = vein(dot(vq, normalize(vec3(0.8, -0.35, 0.5))) - 0.12 + n2.x * 0.03, 0.005, fw) * smoothstep(-0.3, 0.4, n1.x);
+  float v2 = vein(dot(vq, normalize(vec3(-0.3, 0.45, 0.85))) + 0.38, 0.003, fw) * smoothstep(0.3, 0.7, n2.x);
+  vec3 pale = vec3(0.48, 0.24, 0.2);
+  a = mix(a, pale, clamp(v1 * 0.5 + v2 * 0.35, 0.0, 1.0) * u_tex);
+  return vec4(a, n2.x * 0.5 + 0.5);
 }
 
-// facets around the pointer: a jittered lattice of cells, each tilting the surface its own way;
-// w is the gap between the nearest and second-nearest cell, small along the cracks between them
-vec4 cells(vec3 q) {
-  vec3 i = floor(q);
-  vec3 f = fract(q);
-  float f1 = 8.0;
-  float f2 = 8.0;
-  vec3 id = vec3(0.0);
-  for (int z = -1; z <= 1; z++)
-    for (int y = -1; y <= 1; y++)
-      for (int x = -1; x <= 1; x++) {
-        vec3 g = vec3(float(x), float(y), float(z));
-        vec3 r = g + hash33(i + g) - f;
-        float d = dot(r, r);
-        if (d < f1) { f2 = f1; f1 = d; id = i + g; }
-        else if (d < f2) f2 = d;
-      }
-  return vec4(hash33(id * 1.37 + 11.0), sqrt(f2) - sqrt(f1));
+// ---- main -----------------------------------------------------------------------------------
+
+float shoulder(float x) {
+  const float a = 0.72;
+  return x < a ? x : a + (1.0 - a) * (1.0 - exp(-(x - a) / (1.0 - a)));
 }
 
 void main() {
-  vec2 css = gl_FragCoord.xy / u_dpr;
-  vec3 ro = vec3(0.0, 0.0, u_focal);
-  vec3 rd = normalize(vec3(css - 0.5 * u_vp, 0.0) - ro);
+  vec2 xy = (gl_FragCoord.xy - 0.5 * u_res) * u_px;
+  vec3 ro = vec3(0.0, 0.0, u_cam);
+  vec3 rd = normalize(vec3(xy, -u_cam));
   mat3 inv = transpose(u_rot);
-  vec3 oro = inv * (ro - u_center);
+  float sc = u_shape.x;
+  vec3 oro = inv * ro / sc;
   vec3 ord = inv * rd;
-  vec2 tb = boxHit(oro, ord + 1e-7, u_box);
-  if (tb.x > tb.y || tb.y < 0.0) { o = vec4(0.0); return; }
 
-  float t = max(tb.x, 0.0);
-  float dmin = 1e9;
-  float tAt = t;
-  bool hit = false;
-  for (int i = 0; i < 96; i++) {
-    float d = map(oro + ord * t);
-    if (d < dmin) { dmin = d; tAt = t; }
-    if (d < 0.15) { hit = true; tAt = t; break; }
-    t += d * 0.72 + 0.04;
-    if (t > tb.y) break;
+  // a pixel at the stone, in its own space (a little generous: the far side is smaller)
+  float pxc = u_px / sc;
+  vec2 tt = span(oro, ord, pxc * 1.5);
+  if (tt.x > tt.y) { o = vec4(0.0); return; }
+
+  // the surface: Newton steps from the entry side never overshoot a convex field
+  vec3 g, gn;
+  float t = tt.x, f = 1.0, sl = -1.0;
+  for (int i = 0; i < 4; i++) {
+    f = field(oro + ord * t, gn);
+    sl = dot(gn, ord);
+    t = min(t - f / min(sl, -1e-3), tt.y);
   }
-
-  // coverage: exact 2D antialiasing on the flat front of the letters, the closest approach of
-  // the ray everywhere else
-  vec3 p = oro + ord * tAt;
-  float sd = hit ? -1.0 : dmin;
-  if (u_flat > 0.0 && p.z > -1.0 && u_morph < 0.5) {
-    vec3 e = p / u_font;
-    float d2 = text2D(vec2(e.x / u_squeeze, e.y)) * u_font * u_squeeze;
-    if (hit || d2 < 1.5) sd = d2;
-  }
-  float a = clamp(0.5 - sd * u_dpr, 0.0, 1.0);
-
-  vec3 col = vec3(0.0);
-  if (a > 0.0) {
-    vec3 n = normalAt(p, 0.55);
-    vec3 N = u_rot * n;
-    vec3 P = u_rot * p + u_center;
-    vec3 V = -rd;
-    vec3 q = p / u_stone;
-
-    float st = smoothstep(0.1, 0.8, u_morph); // how much of the stone's surface shows
-
-    // albedo: deep oxblood, darker and lighter veins, dusty flecks, fine grain
-    float n1 = vnoise(q * 1.7 + 3.0);
-    float n2 = vnoise(q * 8.5);
-    float n3 = vnoise(q * 41.0);
-    vec3 stoneAlb = mix(vec3(0.07, 0.0035, 0.003), vec3(0.2, 0.012, 0.009), n1);
-    float dust = smoothstep(0.58, 0.86, n1) * smoothstep(0.4, 0.82, n2);
-    stoneAlb = mix(stoneAlb, vec3(0.36, 0.12, 0.095), dust * 0.55);
-    stoneAlb *= 0.78 + 0.44 * n3;
-    vec3 alb = mix(vec3(0.36, 0.0, 0.0), stoneAlb, st);
-
-    // grain: a fine bump on the stone's normal
-    if (st > 0.0) {
-      vec3 gq = q * 64.0;
-      float g0 = vnoise(gq);
-      vec3 gr = vec3(vnoise(gq + vec3(0.4, 0.0, 0.0)), vnoise(gq + vec3(0.0, 0.4, 0.0)), vnoise(gq + vec3(0.0, 0.0, 0.4))) - g0;
-      gr = u_rot * gr;
-      N = normalize(N + (gr - dot(gr, N) * N) * 1.3 * st);
+  float px = pxc * t * sc / u_cam; // a pixel at that depth
+  float cov = 1.0;
+  // most rays: on the surface, and a short step on is already well inside, so fully covered
+  bool inside = abs(f) < px * 0.05 && sl < -0.05 && field(oro + ord * (t + 2.0 * px / -sl), g) < -px;
+  if (!inside) {
+    // near the outline the closest approach gives the coverage; the field is convex along the
+    // ray, so bisect its slope
+    float lo = tt.x, hi = tt.y;
+    for (int i = 0; i < 12; i++) {
+      float tm = 0.5 * (lo + hi);
+      field(oro + ord * tm, g);
+      if (dot(g, ord) < 0.0) lo = tm; else hi = tm;
     }
-
-    // shards: facets around the pointer catch the light their own way
-    vec2 dc = P.xy - u_cursor.xy;
-    float sw = u_cursor.z * exp(-dot(dc, dc) / (u_stone * u_stone * 0.16)) * smoothstep(0.6, 1.0, u_morph);
-    float edge = 0.0;
-    if (sw > 0.01) {
-      vec4 c = cells(q * 11.0);
-      N = normalize(mix(N, normalize(N + (c.xyz - 0.5) * 1.7), sw));
-      alb *= mix(1.0, 0.45 + 1.0 * c.x, sw);
-      edge = sw * (1.0 - smoothstep(0.0, 0.09, c.w));
+    float ts = 0.5 * (lo + hi);
+    float fmin = field(oro + ord * ts, g);
+    px = pxc * ts * sc / u_cam;
+    cov = clamp(0.5 - fmin / px, 0.0, 1.0);
+    if (cov <= 0.0) { o = vec4(0.0); return; }
+    // shade where the ray first comes within a hair of its closest approach (the surface itself
+    // once it dips inside): the front of a face seen edge-on, as its covered neighbours see it,
+    // rather than wherever along that face the bisection happened to settle
+    float lvl = max(fmin + 0.1 * px, 0.0);
+    t = tt.x;
+    for (int i = 0; i < 6; i++) {
+      float fi = field(oro + ord * t, g) - lvl;
+      t = min(t - fi / min(dot(g, ord), -1e-3), ts);
     }
-
-    float ndv = max(dot(N, V), 1e-3);
-    // the pointer's light, close in front: it finds the grain wherever it goes
-    vec3 Lv = u_light - P;
-    float dist = length(Lv);
-    vec3 L = Lv / dist;
-    vec3 H = normalize(L + V);
-    float ndl = max(dot(N, L), 0.0);
-    float ndh = max(dot(N, H), 0.0);
-    float rough = mix(0.34, 0.52, st);
-    float r2 = rough * rough;
-    float r4 = r2 * r2;
-    float dd = ndh * ndh * (r4 - 1.0) + 1.0;
-    float D = r4 / (3.14159 * dd * dd);
-    float F = 0.05 + 0.95 * pow(clamp(1.0 - dot(H, V), 0.0, 1.0), 5.0);
-    float G = 0.5 / mix(2.0 * ndl * ndv, ndl + ndv, r2);
-    float atten = 1.0 / (1.0 + pow(dist / (u_stone * 2.2), 2.0));
-    vec3 key = vec3(1.0, 0.92, 0.84) * 3.4 * atten;
-    // a light from behind and above, wrapping round the edges
-    vec3 Lb = normalize(vec3(0.35, 0.75, -0.55));
-    float back = max(dot(N, Lb) + 0.35, 0.0) / 1.35;
-    // a dim sky from above
-    float hemi = 0.5 + 0.5 * N.y;
-    vec3 amb = mix(vec3(0.03, 0.012, 0.012), vec3(0.3, 0.29, 0.28), hemi) * mix(0.9, 0.38, st);
-    float fres = pow(clamp(1.0 - ndv, 0.0, 1.0), 3.5);
-    vec3 rim = vec3(1.0, 0.3, 0.2) * fres * (0.25 + 0.75 * back) * 0.9;
-    vec3 lit = alb * (amb + key * ndl + vec3(1.0, 0.55, 0.45) * back * 0.55 * st)
-             + key * D * F * G * ndl + rim * (0.12 + alb) - edge * alb * 0.7;
-    lit = max(lit, 0.0);
-    lit = lit / (1.0 + lit * 0.6);
-    col = pow(lit, vec3(1.0 / 2.2));
-    col = mix(col, vec3(0.635, 0.0, 0.0), u_flat);
+    field(oro + ord * t, gn);
   }
+  vec3 p = oro + ord * t;
+  vec3 n = normalize(gn);
 
-  // the halo: three soft rims like the live text's shadows
-  float g = max(dmin, 0.0);
-  vec3 s = 0.5 * u_glowR;
-  vec3 k = vec3(0.45, 0.22, 0.12) * 0.3 * exp(-0.5 * (g * g) / (s * s)) * u_glow;
-  float ga = clamp(k.x + k.y + k.z, 0.0, 1.0) * (1.0 - a);
-  vec3 gc = (vec3(1.0, 0.275, 0.196) * k.x + vec3(1.0, 0.176, 0.118) * k.y + vec3(0.824, 0.0, 0.0) * k.z) * (1.0 - a);
+  // a slow, shallow undulation, as on a hand-polished face
+  vec4 nb = gnoise(p * 1.6 + vec3(5.0, 1.0, 9.0));
+  vec3 bt = nb.yzw - dot(nb.yzw, n) * n;
+  n = normalize(n - bt * 0.025 * u_shape.z);
 
-  o = vec4(col * a + gc, a + ga) * u_alpha;
+  vec4 al = albedo(p, px / max(-dot(n, ord), 0.08));
+  vec3 alb = al.rgb;
+
+  vec3 P = u_rot * (p * sc);
+  vec3 N = normalize(u_rot * n);
+  vec3 V = normalize(ro - P);
+  // in the last pixel or two of a rounded edge the normal swings round faster than one sample
+  // per pixel can follow; tipping it a little towards the eye there keeps the outline's shading
+  // from breaking into dots
+  N = normalize(N + V * 0.3 * (1.0 - smoothstep(0.0, 0.45, dot(N, V))));
+  float ndv = clamp(dot(N, V), 1e-3, 1.0);
+  float rough = mix(0.34, 0.18 + 0.08 * al.w, u_shape.z);
+  float a = rough * rough;
+
+  // key: a soft light up-left, in front; a weak cool fill from the right; sky above, a dim
+  // warm floor below
+  vec3 Lk = normalize(vec3(-0.6, 0.62, 0.52));
+  float dk = clamp((dot(N, Lk) + 0.12) / 1.12, 0.0, 1.0);
+  vec3 Lf = normalize(vec3(0.85, -0.15, 0.5));
+  float df = clamp((dot(N, Lf) + 0.2) / 1.2, 0.0, 1.0);
+  float hemi = 0.5 + 0.5 * N.y;
+  vec3 amb = mix(vec3(0.05, 0.04, 0.036), vec3(0.11, 0.11, 0.115), hemi);
+  // rim: a light from behind, upper right, that only reaches faces turned well away from the
+  // eye; it lights the stone's own red rather than laying a grey sheen over it
+  vec3 Lr = normalize(vec3(0.55, 0.5, -0.67));
+  float dr = smoothstep(0.0, 0.7, dot(N, Lr)) * (1.0 - smoothstep(0.2, 0.6, ndv));
+  vec3 diff = vec3(1.0, 0.95, 0.88) * 1.3 * dk * dk + vec3(0.8, 0.86, 1.0) * 0.14 * df + amb + vec3(1.0, 0.9, 0.85) * 0.5 * dr;
+
+  // polish: the studio in the surface, stronger at grazing angles
+  float fr = pow(1.0 - ndv, 5.0);
+  // (held below the physical peak, so grazing faces keep their red instead of going grey)
+  float F = 0.045 + (0.5 - 0.045) * fr;
+  vec3 R = reflect(-V, N);
+  vec3 spec = studio(R, rough) * F;
+
+  // the pointer's light: small, warm, close in front
+  vec3 Lv = u_lp - P;
+  float dl = length(Lv);
+  vec3 Lp = Lv / dl;
+  float nlp = max(dot(N, Lp), 0.0);
+  vec3 Hp = normalize(Lp + V);
+  float att = u_light / (1.0 + dl * dl * 0.18);
+  float ap = 0.3 * 0.3;
+  vec3 pc = vec3(1.0, 0.85, 0.68) * att;
+  spec += pc * 1.8 * ggx(max(dot(N, Hp), 0.0), ap) * vis(nlp, ndv, ap) * nlp * (0.045 + 0.955 * pow(1.0 - max(dot(Hp, V), 0.0), 5.0));
+  diff += pc * 0.6 * nlp;
+
+  vec3 col = alb * diff * (1.0 - F) + spec;
+  col = vec3(shoulder(col.r), shoulder(col.g), shoulder(col.b));
+  col = pow(col, vec3(1.0 / 2.2));
+  // a quarter of a level of dither, against banding in the deep reds
+  uvec2 fc = uvec2(gl_FragCoord.xy);
+  uint hd = mix32(fc.x * 0x8da6b343u ^ fc.y * 0xd8163841u);
+  col += (float(hd >> 8u) * (1.0 / 16777216.0) - 0.5) * (0.5 / 255.0);
+
+  o = vec4(col * cov, cov) * u_alpha;
 }`;
-
-const idle = () =>
-  new Promise<void>((res) => {
-    if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(() => res(), { timeout: 400 });
-    else window.setTimeout(res, 16);
-  });
-
-// ---- the name's distance field --------------------------------------------------------------
-
-const INF = 1e20;
-
-// 1D squared Euclidean distance transform (Felzenszwalb & Huttenlocher), in place
-function edt1d(g: Float32Array, offset: number, stride: number, n: number, f: Float64Array, v: Uint32Array, z: Float64Array) {
-  v[0] = 0;
-  z[0] = -INF;
-  z[1] = INF;
-  f[0] = g[offset];
-  for (let q = 1, k = 0; q < n; q++) {
-    f[q] = g[offset + q * stride];
-    const q2 = q * q;
-    let s = 0;
-    do {
-      const r = v[k];
-      s = (f[q] - f[r] + q2 - r * r) / (q - r) / 2;
-    } while (s <= z[k] && --k > -1);
-    k++;
-    v[k] = q;
-    z[k] = s;
-    z[k + 1] = INF;
-  }
-  for (let q = 0, k = 0; q < n; q++) {
-    while (z[k + 1] < q) k++;
-    const r = v[k];
-    const d = q - r;
-    g[offset + q * stride] = f[r] + d * d;
-  }
-}
-
-// Draws the letters and returns their signed distance (em, negative inside) as half floats.
-// The work is cut into slices of a few milliseconds, each in its own idle moment, so building
-// it never holds up a frame while the visitor scrolls.
-async function nameField(layout: NameLayout) {
-  const w = Math.ceil((layout.width + 2 * PAD) * TEX_EM);
-  const h = Math.ceil((1 + 2 * PAD) * TEX_EM);
-  const cv = document.createElement("canvas");
-  cv.width = w;
-  cv.height = h;
-  const ctx = cv.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return null;
-  ctx.font = `${layout.weight} ${TEX_EM}px ${layout.family}`;
-  ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = "#fff";
-  const y = (PAD + layout.baseline) * TEX_EM;
-  for (const l of layout.letters) ctx.fillText(l.ch, (PAD + l.x) * TEX_EM, y);
-  const px = ctx.getImageData(0, 0, w, h).data;
-  await idle();
-
-  const n = w * h;
-  const outer = new Float32Array(n);
-  const inner = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const a = px[i * 4 + 3] / 255;
-    outer[i] = a === 1 ? 0 : a === 0 ? INF : Math.max(0, 0.5 - a) ** 2;
-    inner[i] = a === 1 ? INF : a === 0 ? 0 : Math.max(0, a - 0.5) ** 2;
-  }
-  const m = Math.max(w, h);
-  const f = new Float64Array(m);
-  const v = new Uint32Array(m);
-  const z = new Float64Array(m + 1);
-  const STEP = 240; // lines per slice
-  for (const g of [outer, inner]) {
-    for (let x0 = 0; x0 < w; x0 += STEP) {
-      await idle();
-      for (let x = x0; x < Math.min(w, x0 + STEP); x++) edt1d(g, x, w, h, f, v, z);
-    }
-    for (let y0 = 0; y0 < h; y0 += STEP / 6) {
-      await idle();
-      for (let yy = y0; yy < Math.min(h, y0 + STEP / 6); yy++) edt1d(g, yy * w, 1, w, f, v, z);
-    }
-  }
-  await idle();
-  const out = new Float32Array(n);
-  for (let i = 0; i < n; i++) out[i] = (Math.sqrt(outer[i]) - Math.sqrt(inner[i])) / TEX_EM;
-  await idle();
-  return { data: toHalf(out), w, h, emW: w / TEX_EM, emH: h / TEX_EM };
-}
-
-// float32 to IEEE half, rounded; R16F filters linearly everywhere (R32F does not on phones),
-// and handing it half floats directly avoids a conversion some drivers get wrong
-function toHalf(src: Float32Array): Uint16Array {
-  const out = new Uint16Array(src.length);
-  const f = new Float32Array(1);
-  const b = new Uint32Array(f.buffer);
-  for (let i = 0; i < src.length; i++) {
-    f[0] = src[i];
-    const x = b[0];
-    const sign = (x >>> 16) & 0x8000;
-    const e = ((x >>> 23) & 0xff) - 112;
-    const m = x & 0x7fffff;
-    if (e <= 0) out[i] = e < -10 ? sign : sign | (((m | 0x800000) >> (1 - e)) + 0x1000) >> 13;
-    else if (e >= 31) out[i] = sign | 0x7c00;
-    else out[i] = sign | ((e << 10) + ((m + 0x1000) >> 13));
-  }
-  return out;
-}
 
 // ---- the stone ------------------------------------------------------------------------------
 
@@ -430,57 +346,72 @@ function rng(seed: number) {
   };
 }
 
-// a block of tilted planes: an even spread of directions, each nudged, a few cut deeper to
-// leave broad faces; then three shallow scallops, as if flakes had been struck off
+// An even spread of directions, each nudged, a few cut deeper to leave broad faces; stretched a
+// little so it reads as a stone rather than a die. Scaled so its farthest corner sits at REACH.
 function stoneShape() {
-  const r = rng(11);
-  const planes = new Float32Array(NP * 4);
+  const r = rng(SEED);
+  const aniso = [1.18, 0.84, 1.0];
+  const pl: number[][] = [];
   const golden = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < NP; i++) {
     const y = 1 - (2 * (i + 0.5)) / NP;
     const rad = Math.sqrt(1 - y * y);
     const th = golden * i;
-    let nx = Math.cos(th) * rad + (r() - 0.5) * 0.55;
-    let ny = y + (r() - 0.5) * 0.45;
-    let nz = Math.sin(th) * rad + (r() - 0.5) * 0.55;
-    const l = Math.hypot(nx, ny, nz);
-    nx /= l;
-    ny /= l;
-    nz /= l;
-    const deep = r() < 0.32;
-    planes.set([nx, ny, nz, deep ? 0.68 + r() * 0.1 : 0.8 + r() * 0.18], i * 4);
+    const nx = Math.cos(th) * rad + (r() - 0.5) * 0.5;
+    const ny = y + (r() - 0.5) * 0.4;
+    const nz = Math.sin(th) * rad + (r() - 0.5) * 0.5;
+    const deep = r() < 0.3;
+    const w = deep ? 0.7 + r() * 0.08 : 0.8 + r() * 0.16;
+    // the plane n.(p / aniso) = w, written as a unit normal in the stretched space
+    let mx = nx / aniso[0];
+    let my = ny / aniso[1];
+    let mz = nz / aniso[2];
+    const l = Math.hypot(mx, my, mz);
+    mx /= l;
+    my /= l;
+    mz /= l;
+    const ln = Math.hypot(nx, ny, nz);
+    pl.push([mx, my, mz, w / ln / l]);
   }
-  const scoops = new Float32Array(NS * 4);
-  const dirs = [
-    [0.55, 0.35, 0.75],
-    [-0.7, -0.15, 0.6],
-    [0.1, 0.85, 0.35],
-  ];
-  dirs.forEach(([x, y, z], i) => {
-    const l = Math.hypot(x, y, z);
-    const rr = 0.85 + r() * 0.35;
-    const reach = 0.86 + rr - 0.06; // the sphere dips ~0.06 below the surface
-    scoops.set([(x / l) * reach * 1.2, (y / l) * reach * 0.85, (z / l) * reach, rr], i * 4);
+  // the sharp block's corners, from every triple of planes; centred on their middle and scaled
+  // so the farthest one sits at REACH
+  const corners: number[][] = [];
+  for (let i = 0; i < NP; i++)
+    for (let j = i + 1; j < NP; j++)
+      for (let k = j + 1; k < NP; k++) {
+        const v = solve3(pl[i], pl[j], pl[k]);
+        if (v && pl.every((q) => q[0] * v[0] + q[1] * v[1] + q[2] * v[2] <= q[3] + 1e-5)) corners.push(v);
+      }
+  const lo = [0, 1, 2].map((a) => Math.min(...corners.map((v) => v[a])));
+  const hi = [0, 1, 2].map((a) => Math.max(...corners.map((v) => v[a])));
+  const c = lo.map((l, a) => (l + hi[a]) / 2);
+  const far = Math.max(...corners.map((v) => Math.hypot(v[0] - c[0], v[1] - c[1], v[2] - c[2])));
+  const k = REACH / far;
+  const planes = new Float32Array(NP * 4);
+  let mean = 0;
+  pl.forEach((q, i) => {
+    const w = (q[3] - q[0] * c[0] - q[1] * c[1] - q[2] * c[2]) * k;
+    planes.set([q[0], q[1], q[2], w], i * 4);
+    mean += w / NP;
   });
-  return { planes, scoops, aniso: [1.22, 0.86, 1.0] as const };
+  return { planes, mean };
 }
 
-function rotation(yaw: number, pitch: number, roll: number): Float32Array {
-  const cY = Math.cos(yaw), sY = Math.sin(yaw), cP = Math.cos(pitch), sP = Math.sin(pitch), cR = Math.cos(roll), sR = Math.sin(roll);
-  const Ry = [[cY, 0, sY], [0, 1, 0], [-sY, 0, cY]];
-  const Rx = [[1, 0, 0], [0, cP, -sP], [0, sP, cP]];
-  const Rz = [[cR, -sR, 0], [sR, cR, 0], [0, 0, 1]];
-  const mul = (A: number[][], B: number[][]) => A.map((row) => [0, 1, 2].map((j) => row[0] * B[0][j] + row[1] * B[1][j] + row[2] * B[2][j]));
-  const M = mul(Rz, mul(Rx, Ry));
-  // column-major for uniformMatrix3fv
-  return new Float32Array([M[0][0], M[1][0], M[2][0], M[0][1], M[1][1], M[2][1], M[0][2], M[1][2], M[2][2]]);
+function solve3(a: number[], b: number[], c: number[]): number[] | null {
+  const det = a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0]);
+  if (Math.abs(det) < 1e-9) return null;
+  const x = a[3] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[3] * c[2] - b[2] * c[3]) + a[2] * (b[3] * c[1] - b[1] * c[3]);
+  const y = a[0] * (b[3] * c[2] - b[2] * c[3]) - a[3] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[3] - b[3] * c[0]);
+  const z = a[0] * (b[1] * c[3] - b[3] * c[1]) - a[1] * (b[0] * c[3] - b[3] * c[0]) + a[3] * (b[0] * c[1] - b[1] * c[0]);
+  return [x / det, y / det, z / det];
 }
 
-const UNIFORMS = [
-  "u_vp", "u_dpr", "u_focal", "u_center", "u_rot", "u_box", "u_font", "u_stone", "u_morph", "u_squeeze", "u_depth", "u_mix",
-  "u_sdf", "u_tex", "u_pad", "u_planes", "u_scoops", "u_aniso", "u_lip", "u_light", "u_cursor", "u_flat", "u_glow",
-  "u_glowR", "u_alpha",
-] as const;
+const smooth = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+const UNIFORMS = ["u_res", "u_px", "u_cam", "u_rot", "u_pl", "u_shape", "u_tex", "u_lp", "u_light", "u_alpha"] as const;
 type U = Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>;
 
 const nextFrame = () => new Promise<void>((res) => requestAnimationFrame(() => res()));
@@ -490,24 +421,22 @@ export class StoneRenderer {
   private gl: WebGL2RenderingContext;
   private prog: WebGLProgram;
   private buf: WebGLBuffer;
-  private tex: WebGLTexture;
   private U: U;
-  private emW: number;
+  private mean: number;
   private scale = 1;
   private disposed = false;
 
-  private constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, prog: WebGLProgram, buf: WebGLBuffer, tex: WebGLTexture, U: U, emW: number) {
+  private constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, prog: WebGLProgram, buf: WebGLBuffer, U: U, mean: number) {
     this.canvas = canvas;
     this.gl = gl;
     this.prog = prog;
     this.buf = buf;
-    this.tex = tex;
     this.U = U;
-    this.emW = emW;
+    this.mean = mean;
   }
 
-  // Everything heavy is spread over idle time and frames; resolves null without WebGL2 or on any error.
-  static async create(canvas: HTMLCanvasElement, layout: NameLayout): Promise<StoneRenderer | null> {
+  // Resolves null without WebGL2 or on any error.
+  static async create(canvas: HTMLCanvasElement): Promise<StoneRenderer | null> {
     const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "high-performance" });
     if (!gl) return null;
     try {
@@ -537,18 +466,6 @@ export class StoneRenderer {
       gl.deleteShader(vs);
       gl.deleteShader(fs);
 
-      const field = await nameField(layout);
-      if (!field || gl.isContextLost()) return null;
-
-      const tex = gl.createTexture()!;
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, field.w, field.h, 0, gl.RED, gl.HALF_FLOAT, field.data);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
       const buf = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
@@ -559,29 +476,28 @@ export class StoneRenderer {
 
       const U = Object.fromEntries(UNIFORMS.map((n) => [n, gl.getUniformLocation(prog, n)])) as U;
       const shape = stoneShape();
-      gl.uniform1i(U.u_sdf, 0);
-      gl.uniform4f(U.u_tex, -field.emW / 2, -field.emH / 2, field.emW, field.emH);
-      gl.uniform1f(U.u_pad, PAD * 0.95);
-      gl.uniform4fv(U.u_planes, shape.planes);
-      gl.uniform4fv(U.u_scoops, shape.scoops);
-      gl.uniform3f(U.u_aniso, ...shape.aniso);
-      gl.uniform1f(U.u_lip, Math.min(...shape.aniso));
+      gl.uniform4fv(U.u_pl, shape.planes);
+      gl.uniform1f(U.u_cam, CAM);
       gl.clearColor(0, 0, 0, 0);
       // one invisible draw now, so drivers that build the pipeline on first use (Safari) do it
-      // here rather than on the first frame of the hand-over
+      // here rather than on the first frame the stone is seen
       gl.viewport(0, 0, 1, 1);
+      gl.uniform2f(U.u_res, 1, 1);
+      gl.uniform1f(U.u_px, 3);
+      gl.uniformMatrix3fv(U.u_rot, false, new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]));
+      gl.uniform4f(U.u_shape, 1, shape.mean, 1, 0.05);
       gl.uniform1f(U.u_alpha, 0);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       gl.clear(gl.COLOR_BUFFER_BIT);
       if (gl.isContextLost()) return null;
-      return new StoneRenderer(canvas, gl, prog, buf, tex, U, layout.width);
+      return new StoneRenderer(canvas, gl, prog, buf, U, shape.mean);
     } catch (e) {
       console.warn("stone", e);
       return null;
     }
   }
 
-  // resolution: css size times the capped device ratio times a quality factor (lowered when slow)
+  // backing-store pixels per css px
   setScale(s: number) {
     this.scale = s;
   }
@@ -589,49 +505,35 @@ export class StoneRenderer {
   render(f: StoneFrame) {
     if (this.disposed || this.gl.isContextLost()) return;
     const { gl, U, canvas } = this;
-    const k = this.scale;
-    const w = Math.max(1, Math.round(f.vw * k));
-    const h = Math.max(1, Math.round(f.vh * k));
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
+    const side = Math.max(1, Math.round(f.size * this.scale));
+    if (canvas.width !== side || canvas.height !== side) {
+      canvas.width = side;
+      canvas.height = side;
     }
-    gl.viewport(0, 0, w, h);
+    gl.viewport(0, 0, side, side);
+    if (!(f.alpha > 0)) {
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      return;
+    }
     gl.useProgram(this.prog);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.tex);
 
-    const focal = 2.2 * Math.max(f.vw, f.vh);
-    gl.uniform2f(U.u_vp, f.vw, f.vh);
-    gl.uniform1f(U.u_dpr, w / f.vw);
-    gl.uniform1f(U.u_focal, focal);
-    gl.uniform3f(U.u_center, f.cx - f.vw / 2, f.vh / 2 - f.cy, 0);
-    gl.uniformMatrix3fv(U.u_rot, false, rotation(f.yaw, f.pitch, f.roll));
+    // the bead grows into the stone while its sphere gives way to the planes and their edges
+    // tighten; all of it smooth in form, so scrolling never pops
+    const form = Math.min(1, Math.max(0, f.form));
+    const grow = smooth(0, 1, form);
+    const s0 = BEAD / this.mean;
+    const scale = s0 + (1 - s0) * grow;
+    const toPlanes = PILLOW * smooth(0.05, 0.85, form);
+    const soft = 0.022 + 0.3 * (1 - smooth(0.1, 1, form)) ** 2;
+    gl.uniform4f(U.u_shape, scale, this.mean, toPlanes, soft);
+    gl.uniform1f(U.u_tex, 0.15 + 0.85 * smooth(0.2, 0.9, form));
 
-    const glowR = [1.5 * f.u, 10 * f.u, 26 * f.u].map((r, i) => Math.max([1, 6, 14][i], r));
-    const glowPad = f.glow > 0.01 ? glowR[2] * 1.6 : 2;
-    const m = f.morph;
-    const sw = f.swell * f.font;
-    const tx = (this.emW / 2 + 0.05) * f.font * f.squeeze + sw;
-    const ty = 0.62 * f.font + sw;
-    const tz = (2 * f.depth + 0.05) * f.font + sw;
-    const sr = 1.45 * f.stone;
-    const bx = m <= 0 ? tx : m >= 1 ? sr : Math.max(tx, sr) * 1.08;
-    const by = m <= 0 ? ty : m >= 1 ? sr : Math.max(ty, sr) * 1.08;
-    const bz = m <= 0 ? tz : m >= 1 ? sr : Math.max(tz, sr) * 1.08;
-    gl.uniform3f(U.u_box, bx + glowPad, by + glowPad, bz + glowPad);
-
-    gl.uniform1f(U.u_font, f.font);
-    gl.uniform1f(U.u_stone, f.stone);
-    gl.uniform1f(U.u_morph, m);
-    gl.uniform1f(U.u_squeeze, f.squeeze);
-    gl.uniform1f(U.u_depth, f.depth);
-    gl.uniform4f(U.u_mix, sw, f.blend, 0, 0);
-    gl.uniform3f(U.u_light, f.lightX - f.vw / 2, f.vh / 2 - f.lightY, 1.9 * f.stone);
-    gl.uniform3f(U.u_cursor, f.lightX - f.vw / 2, f.vh / 2 - f.lightY, f.shards);
-    gl.uniform1f(U.u_flat, f.flat);
-    gl.uniform1f(U.u_glow, f.glow);
-    gl.uniform3f(U.u_glowR, glowR[0], glowR[1], glowR[2]);
+    const u = Math.max(1e-3, f.unit);
+    gl.uniform2f(U.u_res, side, side);
+    gl.uniform1f(U.u_px, f.size / side / u);
+    gl.uniformMatrix3fv(U.u_rot, false, f.rot);
+    gl.uniform3f(U.u_lp, (f.lightX - f.size / 2) / u, (f.size / 2 - f.lightY) / u, 1.8);
+    gl.uniform1f(U.u_light, Math.min(1, Math.max(0, f.light)));
     gl.uniform1f(U.u_alpha, f.alpha);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -647,7 +549,6 @@ export class StoneRenderer {
     if (this.disposed) return;
     this.disposed = true;
     const { gl } = this;
-    gl.deleteTexture(this.tex);
     gl.deleteBuffer(this.buf);
     gl.deleteProgram(this.prog);
     gl.getExtension("WEBGL_lose_context")?.loseContext();

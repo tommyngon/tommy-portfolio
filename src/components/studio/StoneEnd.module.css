@@ -1,22 +1,11 @@
-/* The end of the home page: the stone's slide, then place and contact over the name.
-   Without motion it is two plain screens; with motion ([data-motion], set by script) a tall
-   track keeps one stage pinned while the slide and the footer play out on it. */
+/* The end of the home page, one screen: the statement top-left, the stone in the middle, place
+   and contact over the name at the bottom. With motion ([data-motion], set by script) a taller
+   track keeps that screen pinned while the stone forms and the footer arrives. */
 .end {
   position: relative;
-  /* the stone's size, as the script sets it: px per stone unit (the still is drawn at 300) */
-  --stone: min(0.28 * 100svh, 0.185 * 100vw);
-  --stone-y: 56%;
-}
-
-/* drawn on approach, over the page and under the stage's text */
-.canvas {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  pointer-events: none;
-  visibility: hidden;
+  /* px per stone unit: the stone is about two units across, its canvas three */
+  --unit: min(18.5svh, 14vw);
+  --stone-y: 43%;
 }
 
 .track {
@@ -26,34 +15,30 @@
 .stage {
   position: relative;
   z-index: 3;
-}
-
-.slide {
-  position: relative;
   height: 100svh;
-  overflow: hidden; /* the still is wider than a phone */
+  min-height: 460px;
+  overflow: hidden;
 }
 
-/* top-left, in the reference's place: the second column, under the corner labels */
+/* top-left, the second column, under the corner labels; set like the landing sheet's statement */
 .text {
   position: absolute;
   left: calc(var(--gutter) + var(--step));
   top: calc(var(--header-h) + 3svh);
-  max-width: calc(100% - var(--gutter) * 2);
   margin: 0;
-  font-family: var(--f-ui);
-  font-size: max(16px, 1.39vw);
-  font-weight: 500;
-  line-height: 1.25;
+  font-family: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
   color: var(--c-ink);
 }
 
 .mask {
   display: block;
   overflow: hidden;
-  /* room for descenders inside the mask */
-  padding-bottom: 0.08em;
-  margin-bottom: -0.08em;
+  /* room for the hover flip's headroom inside the mask */
+  padding: 0.18em 0;
+  margin: -0.18em 0;
 }
 
 .line {
@@ -61,7 +46,7 @@
 }
 
 .end[data-motion] .line {
-  transform: translateY(110%);
+  transform: translateY(120%);
   transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -69,40 +54,63 @@
   transform: none;
 }
 
-.still {
+/* the stone's square: three units a side, the stone centred in it */
+.stone {
   position: absolute;
   left: 50%;
   top: var(--stone-y);
-  width: calc(var(--stone) * 4);
-  height: auto;
-  max-width: none;
+  width: calc(var(--unit) * 3);
+  height: calc(var(--unit) * 3);
   translate: -50% -50%;
   pointer-events: none;
 }
 
+.still,
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  pointer-events: none;
+}
+
+.canvas {
+  visibility: hidden;
+  touch-action: pan-y; /* a sideways drag turns the stone, an upright one still scrolls */
+}
+
+.canvas[data-live] {
+  pointer-events: auto;
+}
+
+.canvas[data-over] {
+  cursor: grab;
+}
+
+.canvas[data-held] {
+  cursor: grabbing;
+}
+
+/* a specimen label under the stone */
 .caption {
   position: absolute;
-  left: 50%;
-  top: var(--stone-y);
+  left: 0;
+  right: 0;
+  top: calc(var(--stone-y) + var(--unit) * 1.32);
   margin: 0;
-  translate: -50% -50%;
-  color: #fff;
-  font-size: max(16px, 1.39vw);
-  font-weight: 500;
-  line-height: 1.25;
-  text-transform: none;
-  white-space: nowrap;
-  pointer-events: none;
+  text-align: center;
+  color: var(--c-muted);
+  font-family: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 /* ---- the footer: place and contact on the grid, the name across the bottom ---- */
 .finale {
-  position: relative;
+  position: absolute;
+  inset: auto 0 0;
   box-sizing: border-box;
-  min-height: 72svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
   /* the name's capitals sit a gutter above the bottom edge (its box runs 0.136em below them) */
   padding-bottom: max(0px, calc(var(--gutter) - 0.01304 * (100vw - 2 * var(--gutter))));
 }
@@ -189,7 +197,7 @@
   --name-k: 10.43;
   margin: 0;
   padding-inline: var(--gutter);
-  color: var(--red, #a20000);
+  color: var(--red, #bd1e1e);
   font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   font-size: calc((100cqw - 2 * var(--gutter)) / var(--name-k));
   font-weight: 700;
@@ -206,7 +214,7 @@
 
 /* ---- motion: one pinned stage ---- */
 .end[data-motion] .track {
-  height: 340svh;
+  height: 190svh;
 }
 
 .end[data-motion] .stage {
@@ -214,24 +222,14 @@
   top: 0;
   height: 100svh;
   height: 100dvh;
-  overflow: hidden;
-}
-
-.end[data-motion] .slide {
-  position: absolute;
-  inset: 0;
-  height: auto;
 }
 
 .end[data-motion] .finale {
-  position: absolute;
-  inset: 0;
-  min-height: 0;
   pointer-events: none;
 }
 
-.end[data-motion] .finale[data-live] .info,
-.end[data-motion] .finale:focus-within .info {
+.end[data-motion] .finale[data-live],
+.end[data-motion] .finale:focus-within {
   pointer-events: auto;
 }
 
@@ -241,23 +239,19 @@
   transform: none !important;
 }
 
-.end[data-motion] .caption {
-  opacity: 0;
-}
-
 @media (max-width: 640px) {
   .end {
-    --stone: min(0.28 * 100svh, 0.34 * 100vw);
+    --unit: min(17svh, 29vw);
+    --stone-y: 44%;
   }
 
   .text {
     left: var(--gutter);
-    right: var(--gutter);
-    font-size: 17px;
+    font-size: 10.5px;
   }
 
   .caption {
-    font-size: 15px;
+    font-size: 10.5px;
   }
 
   .info {

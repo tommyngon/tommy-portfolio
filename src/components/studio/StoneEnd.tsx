@@ -1,11 +1,16 @@
+import { IBM_Plex_Mono } from "next/font/google";
 import HoverText from "../HoverText";
+import HoverTranslate from "../HoverTranslate";
 import NameLetters from "./NameLetters";
 import StoneMotion, { BackToTop, LocalTime } from "./StoneMotion";
 import { CONTACT, SOCIALS } from "@/lib/site";
 import s from "./StoneEnd.module.css";
 
-// English / Norwegian (bokmål), one entry per printed line; hovering a letter flips it.
-// DRAFT COPY written from the site's own lines; Tommy to reword.
+// the landing sheet's face, so this statement is set exactly like the first one
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono" });
+
+// English / Norwegian (bokmål), one entry per printed line; hovering a letter flips it, as on
+// the landing sheet. DRAFT COPY written from the site's own lines; Tommy to reword.
 const LINES: [string, string][] = [
   ["Clothing, software, a company.", "Klær, programvare, et selskap."],
   ["Different materials, held to the same attention:", "Ulike materialer, med samme oppmerksomhet:"],
@@ -13,36 +18,37 @@ const LINES: [string, string][] = [
   ["effortless, and details refined until they speak", "uanstrengt, og detaljer finpusset til de taler"],
   ["a visual language of my own.", "et visuelt språk som er mitt eget."],
 ];
-const CAPTION = "Form, Function, Attention";
+const CAPTION: [string, string] = ["form, function, attention", "form, funksjon, oppmerksomhet"];
 
-// The end of the home page. Scrolling on from the collection, the pinned name turns into a red
-// stone on a slide of its own, with a short statement top-left; scrolling past it, the stone
-// turns back into the name, which comes to rest large at the very bottom under place and
-// contact. The motion lives in StoneMotion (script, WebGL loaded on approach). Without it
-// (reduced motion, no script) this is a plain slide with a still of the stone and a footer.
+// The end of the home page, one screen: a short statement top-left, a red stone that turns
+// slowly (and can be turned by hand), and at the bottom place and contact over the name.
+// Scrolling into it, the pinned name's letters gather into the stone; then the footer and the
+// large name arrive. The motion lives in StoneMotion (script, WebGL loaded on approach).
+// Without it (reduced motion, no script) this is the same screen with a still of the stone.
 export default function StoneEnd() {
   const year = new Date().getFullYear();
   return (
-    <section className={s.end} data-stone-end="" aria-label="About and contact">
-      <StoneMotion />
+    <section className={`${s.end} ${mono.variable}`} data-stone-end="" aria-label="About and contact">
       <div className={s.track} data-k="track">
         <div className={s.stage} data-k="stage">
-          <div className={s.slide} data-k="slide">
-            <p className={s.text} data-k="text">
-              {LINES.map(([en, no], i) => (
-                <span key={i} className={s.mask}>
-                  <span className={s.line} style={{ transitionDelay: `${i * 90}ms` }}>
-                    <HoverText en={en} no={no} />
-                  </span>
+          <p className={s.text} data-k="text">
+            {LINES.map(([en, no], i) => (
+              <span key={i} className={s.mask}>
+                <span className={s.line} style={{ transitionDelay: `${i * 80}ms` }}>
+                  <HoverTranslate en={en} no={no} align="start" />
                 </span>
-              ))}
-            </p>
+              </span>
+            ))}
+          </p>
+
+          <div className={s.stone} data-k="stone">
             {/* eslint-disable-next-line @next/next/no-img-element -- a still for when the stone isn't drawn live; next/image would add nothing */}
-            <img className={s.still} data-k="still" src="/home/stone.webp" alt="" width={1200} height={1000} loading="lazy" decoding="async" />
-            <p className={s.caption} data-k="caption" aria-hidden="true">
-              {CAPTION}
-            </p>
+            <img className={s.still} data-k="still" src="/home/stone.webp" alt="" width={1200} height={1200} loading="lazy" decoding="async" />
+            <StoneMotion />
           </div>
+          <p className={s.caption} data-k="caption">
+            <HoverTranslate en={CAPTION[0]} no={CAPTION[1]} />
+          </p>
 
           <footer className={s.finale} data-k="finale">
             <div className={s.info}>
@@ -72,7 +78,7 @@ export default function StoneEnd() {
                 <BackToTop />
               </p>
             </div>
-            <div className={s.finalWrap} data-k="finalwrap">
+            <div className={s.finalWrap}>
               <p className={s.name} data-k="final">
                 <NameLetters />
               </p>

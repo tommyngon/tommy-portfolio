@@ -1,11 +1,21 @@
-/* The name, one box per letter. --h (0..1, set per letter from script) is how much of the
-   pointer's light a letter has: it brightens towards a warm scarlet, lifts a touch and its
-   glow widens. At 0 it is exactly the resting name: #A20000 with the faint glow. */
+/* The name, one box per letter. Each letter carries its own paint in two layers, so it still looks
+   right when StoneMotion transforms it on its own:
+     ::before  the glyph again, transparent, carrying only the faint three-layer glow
+     .fill     the glyph filled with the name's red, over the glow
+   A soft band of warmer, lighter red (the sheen) glides along the name with the pointer. It is a
+   horizontal gradient inside each letter's own coordinates (--x is the letter's left offset in the
+   name, --sx the band's centre, both px), so it runs on unbroken from letter to letter, and being
+   clipped to the glyphs it only ever lights the letters. --sa (0..1) is its strength; at 0 every
+   stop is exactly the resting red. Script sets --sx / --sa on the root, --x on each letter. */
 /* a flex row, so the box is exactly the letters: one em tall, as wide as the name */
 .letters {
+  --sx: -9999px;
+  --sa: 0;
   display: inline-flex;
   vertical-align: top;
   pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .space {
@@ -13,21 +23,71 @@
 }
 
 .ch {
-  --h: 0;
+  --x: 0px;
+  position: relative;
   display: block;
-  color: color-mix(in srgb, var(--red, #a20000), #ff3a24 calc(var(--h) * 62%));
-  transform: translateY(calc(var(--h) * -0.075em)) scale(calc(1 + var(--h) * 0.045));
-  transform-origin: 50% 80%;
+}
+
+/* the glow layer: same glyph, same place, no fill of its own */
+.ch::before {
+  content: attr(data-g);
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  white-space: pre;
+  pointer-events: none;
   /* a tight warm rim keeps each letter crisp, a wider, paler bloom lifts it off the paper */
   /* (--glow, set from script, hands the halo over to the drawn name at the end of the page) */
   text-shadow:
-    0 0 max(1px, calc((1.5 + 1.5 * var(--h)) * var(--u, 1px))) rgb(255 70 50 / calc((0.45 + 0.3 * var(--h)) * var(--glow, 1))),
-    0 0 max(6px, calc((10 + 8 * var(--h)) * var(--u, 1px))) rgb(255 45 30 / calc((0.22 + 0.33 * var(--h)) * var(--glow, 1))),
-    0 0 max(14px, calc((26 + 22 * var(--h)) * var(--u, 1px))) rgb(210 0 0 / calc((0.12 + 0.2 * var(--h)) * var(--glow, 1)));
+    0 0 max(1px, calc(1.5 * var(--u, 1px))) rgb(255 70 50 / calc(0.45 * var(--glow, 1))),
+    0 0 max(6px, calc(10 * var(--u, 1px))) rgb(255 45 30 / calc(0.22 * var(--glow, 1))),
+    0 0 max(14px, calc(26 * var(--u, 1px))) rgb(210 0 0 / calc(0.12 * var(--glow, 1)));
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ch {
-    transform: none;
+/* the fill layer. It is padded and pulled back by the same amount so the box stays the glyph's
+   advance, while the paint area reaches past it (descenders, side bearings) and clips nothing. */
+.fill {
+  --pad: 0.12em;
+  --glint: #ffab80; /* the warm light that passes over the lacquer */
+  --red-now: var(--red, #bd1e1e);
+  display: block;
+  position: relative;
+  padding: var(--pad);
+  margin: calc(-1 * var(--pad));
+  color: var(--red-now);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .fill {
+    /* centre of the band in this letter's own box, and its peak strength as a mix percentage */
+    --o: calc(var(--sx) - var(--x) + var(--pad));
+    --p: calc(var(--sa) * 30%);
+    color: transparent;
+    background-color: transparent;
+    /* gaussian, sigma 0.7em (about a letter and a half), out to 3 sigma: weights 0 .011 .056 .198 .487 .835 1 */
+    background-image: linear-gradient(
+      90deg,
+      var(--red-now) calc(var(--o) - 2.1em),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.056)) calc(var(--o) - 1.68em),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.198)) calc(var(--o) - 1.26em),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.487)) calc(var(--o) - 0.84em),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.835)) calc(var(--o) - 0.42em),
+      color-mix(in srgb, var(--red-now), var(--glint) var(--p)) var(--o),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.835)) calc(var(--o) + 0.42em),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.487)) calc(var(--o) + 0.84em),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.198)) calc(var(--o) + 1.26em),
+      color-mix(in srgb, var(--red-now), var(--glint) calc(var(--p) * 0.056)) calc(var(--o) + 1.68em),
+      var(--red-now) calc(var(--o) + 2.1em)
+    );
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fill {
+      color: var(--red-now);
+      background-image: none;
+    }
   }
 }

@@ -131,7 +131,7 @@
     {
      "n": 6,
      "tag": "1.2",
-     "stem": "Hva er σ(0)?",
+     "stem": "Hva er σ(0)?\n(Formel: σ(z) = 1/(1 + e^(−z)))",
      "options": [
       {
        "key": "A",
@@ -156,7 +156,7 @@
     {
      "n": 7,
      "tag": "1.2",
-     "stem": "Hva er den deriverte σ′(z) i punktet z = 0?",
+     "stem": "Hva er den deriverte σ′(z) i punktet z = 0?\n(Formel: σ′(z) = σ(z)·(1 − σ(z)), σ(z) = 1/(1 + e^(−z)))",
      "options": [
       {
        "key": "A",
@@ -256,7 +256,7 @@
     {
      "n": 11,
      "tag": "1.2",
-     "stem": "Etter en forward pass er ŷ = 0,8 for y = 1, x = 3 og η = 0,1. Hvordan endres w i ett gradient descent-steg?",
+     "stem": "Etter en forward pass er ŷ = 0,8 for y = 1, x = 3 og η = 0,1. Hvordan endres w i ett gradient descent-steg?\n(Formler: ∂L/∂w = (ŷ − y)·x; w ← w − η·∂L/∂w)",
      "options": [
       {
        "key": "A",
@@ -406,7 +406,7 @@
     {
      "n": 17,
      "tag": "1.2.4",
-     "stem": "En klassifikator gir TP = 30, FP = 10, FN = 20 og TN = 40. Hva er precision?",
+     "stem": "En klassifikator gir TP = 30, FP = 10, FN = 20 og TN = 40. Hva er precision?\n(Formel: precision = TP/(TP + FP))",
      "options": [
       {
        "key": "A",
@@ -431,7 +431,7 @@
     {
      "n": 18,
      "tag": "1.2.4",
-     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er recall?",
+     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er recall?\n(Formel: recall = TP/(TP + FN))",
      "options": [
       {
        "key": "A",
@@ -456,7 +456,7 @@
     {
      "n": 19,
      "tag": "1.2.4",
-     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er F1-score?",
+     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er F1-score?\n(Formler: F1 = 2·precision·recall/(precision + recall); precision = TP/(TP + FP); recall = TP/(TP + FN))",
      "options": [
       {
        "key": "A",
@@ -481,7 +481,7 @@
     {
      "n": 20,
      "tag": "1.2.4",
-     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er FPR?",
+     "stem": "Samme klassifikator (TP = 30, FP = 10, FN = 20, TN = 40). Hva er FPR?\n(Formel: FPR = FP/(FP + TN))",
      "options": [
       {
        "key": "A",
@@ -506,7 +506,7 @@
     {
      "n": 21,
      "tag": "1.2.4",
-     "stem": "Av 1000 pasienter er 990 friske og 10 syke. En modell predikerer alle som friske. Hva blir accuracy og recall for syke?",
+     "stem": "Av 1000 pasienter er 990 friske og 10 syke. En modell predikerer alle som friske. Hva blir accuracy og recall for syke?\n(Formler: accuracy = (TP + TN)/(TP + FP + FN + TN); recall = TP/(TP + FN))",
      "options": [
       {
        "key": "A",
@@ -706,7 +706,7 @@
     {
      "n": 29,
      "tag": "1.2",
-     "stem": "En logistisk modell gir z = −2 for et punkt. Hvilken klasse predikeres med terskel 0,5?",
+     "stem": "En logistisk modell gir z = −2 for et punkt. Hvilken klasse predikeres med terskel 0,5?\n(Formel: ŷ = σ(z), σ(z) = 1/(1 + e^(−z)))",
      "options": [
       {
        "key": "A",
@@ -731,7 +731,7 @@
     {
      "n": 30,
      "tag": "1.1",
-     "stem": "En feature har verdiene 2, 4 og 10. Hva blir verdien 4 etter MinMaxScaler (skalering til [0, 1])?",
+     "stem": "En feature har verdiene 2, 4 og 10. Hva blir verdien 4 etter MinMaxScaler (skalering til [0, 1])?\n(Formel: x′ = (x − x_min)/(x_max − x_min))",
      "options": [
       {
        "key": "A",
@@ -786,7 +786,7 @@
     {
      "n": 2,
      "tag": "1.2.6",
-     "stem": "Hva er entropien (log₂) til en rettferdig mynt?",
+     "stem": "Hva er entropien (log₂) til en rettferdig mynt?\n(Formel: H = −Σ pᵢ·log₂ pᵢ)",
      "options": [
       {
        "key": "A",
@@ -811,7 +811,7 @@
     {
      "n": 3,
      "tag": "1.2.6",
-     "stem": "Hvilken binær fordeling har høyest entropi?",
+     "stem": "Hvilken binær fordeling har høyest entropi?\n(Formel: H = −Σ pᵢ·log₂ pᵢ)",
      "options": [
       {
        "key": "A",
@@ -936,7 +936,7 @@
     {
      "n": 8,
      "tag": "1.2.8",
-     "stem": "Naïve Bayes med to features: p(C₁) = 0,4 og p(C₀) = 0,6. p(x₁|C₁) = 0,5, p(x₂|C₁) = 0,5, p(x₁|C₀) = 0,2 og p(x₂|C₀) = 0,5. Hvilken klasse predikeres?",
+     "stem": "Naïve Bayes med to features: p(C₁) = 0,4 og p(C₀) = 0,6. p(x₁|C₁) = 0,5, p(x₂|C₁) = 0,5, p(x₁|C₀) = 0,2 og p(x₂|C₀) = 0,5. Hvilken klasse predikeres?\n(Formel: p(C|x) ∝ p(C)·Π p(xᵢ|C))",
      "options": [
       {
        "key": "A",
@@ -1111,7 +1111,7 @@
     {
      "n": 15,
      "tag": "1.2.10",
-     "stem": "Klasse A har 800 og klasse B har 200 punkter. Hvor mange punkter får du totalt etter hhv. undersampling og oversampling (til like store klasser)?",
+     "stem": "Klasse A har 800 og klasse B har 200 punkter. Hvor mange punkter får du totalt etter hhv. undersampling og oversampling (til like store klasser)?\n(Formler: undersampling: totalt 2·n_min; oversampling: totalt 2·n_maj (n_min og n_maj = antall punkter i minste og største klasse))",
      "options": [
       {
        "key": "A",
@@ -1236,7 +1236,7 @@
     {
      "n": 20,
      "tag": "1.3",
-     "stem": "Hvilke verdier kan Gini impurity ha i det binære tilfellet?",
+     "stem": "Hvilke verdier kan Gini impurity ha i det binære tilfellet?\n(Formel: Gini = 1 − Σ pₖ²)",
      "options": [
       {
        "key": "A",
@@ -1261,7 +1261,7 @@
     {
      "n": 21,
      "tag": "1.3",
-     "stem": "En node har 3 positive og 7 negative punkter. Hva er Gini?",
+     "stem": "En node har 3 positive og 7 negative punkter. Hva er Gini?\n(Formel: Gini = 1 − Σ pₖ²)",
      "options": [
       {
        "key": "A",
@@ -1286,7 +1286,7 @@
     {
      "n": 22,
      "tag": "1.3",
-     "stem": "Et datasett har 10 positive og 10 negative. En splitt gir D₁ med 8 positive og 0 negative, og D₂ med 2 positive og 10 negative. Hva er vektet Gini etter splitten?",
+     "stem": "Et datasett har 10 positive og 10 negative. En splitt gir D₁ med 8 positive og 0 negative, og D₂ med 2 positive og 10 negative. Hva er vektet Gini etter splitten?\n(Formler: Gini = 1 − Σ pₖ²; Gini_f(D) = Σⱼ (|Dⱼ|/|D|)·Gini(Dⱼ))",
      "options": [
       {
        "key": "A",
@@ -1311,7 +1311,7 @@
     {
      "n": 23,
      "tag": "1.3",
-     "stem": "Hva er maksimal entropi (log₂) for en binær node, og når inntreffer den?",
+     "stem": "Hva er maksimal entropi (log₂) for en binær node, og når inntreffer den?\n(Formel: H = −Σ pᵢ·log₂ pᵢ)",
      "options": [
       {
        "key": "A",
@@ -1361,7 +1361,7 @@
     {
      "n": 25,
      "tag": "1.3",
-     "stem": "En node har entropi 1. En splitt gir to noder med 60 % og 40 % av punktene, og entropi 0,5 og 0,25. Hva er ΔI?",
+     "stem": "En node har entropi 1. En splitt gir to noder med 60 % og 40 % av punktene, og entropi 0,5 og 0,25. Hva er ΔI?\n(Formler: ΔI = I_før − E[I_etter]; E[I_etter] = Σⱼ (|Dⱼ|/|D|)·I(Dⱼ))",
      "options": [
       {
        "key": "A",
@@ -1541,7 +1541,7 @@
     {
      "n": 2,
      "tag": "1.4.1",
-     "stem": "En lineær regresjonsmodell har n features. Hvor mange parametre har den?",
+     "stem": "En lineær regresjonsmodell har n features. Hvor mange parametre har den?\n(Formel: f(x) = β₀ + β₁x₁ + … + βₙxₙ)",
      "options": [
       {
        "key": "A",
@@ -1866,7 +1866,7 @@
     {
      "n": 15,
      "tag": "1.4.5",
-     "stem": "For et punkt er Bias² = 3, varians = 2 og σ² = 1. Hva er forventet kvadratisk feil?",
+     "stem": "For et punkt er Bias² = 3, varians = 2 og σ² = 1. Hva er forventet kvadratisk feil?\n(Formel: E[(y − f)²] = Bias² + Var + σ²)",
      "options": [
       {
        "key": "A",
@@ -2346,7 +2346,7 @@
     {
      "n": 4,
      "tag": "2.1",
-     "stem": "Hvilke vekter gir en AND-port med ett perseptron (w₁, w₂, b)?",
+     "stem": "Hvilke vekter gir en AND-port med ett perseptron (w₁, w₂, b)?\n(Formel: f(x) = H(w₁x₁ + w₂x₂ + b), H(z) = 1 hvis z ≥ 0, ellers 0)",
      "options": [
       {
        "key": "A",
@@ -2371,7 +2371,7 @@
     {
      "n": 5,
      "tag": "2.1",
-     "stem": "Perseptron med vekter (1, 1) og b = −0,5: hvilken logisk port er det?",
+     "stem": "Perseptron med vekter (1, 1) og b = −0,5: hvilken logisk port er det?\n(Formel: f(x) = H(w₁x₁ + w₂x₂ + b), H(z) = 1 hvis z ≥ 0, ellers 0)",
      "options": [
       {
        "key": "A",
@@ -2521,7 +2521,7 @@
     {
      "n": 11,
      "tag": "2.3",
-     "stem": "Et Dense-lag med 8 noder følger etter en input med 5 features. Hvor mange parametre har laget?",
+     "stem": "Et Dense-lag med 8 noder følger etter en input med 5 features. Hvor mange parametre har laget?\n(Formel: parametre i ett lag = (n_inn + 1)·n_noder)",
      "options": [
       {
        "key": "A",
@@ -2596,7 +2596,7 @@
     {
      "n": 14,
      "tag": "2.5",
-     "stem": "Et nettverk trenes på N = 500 punkter. Hvor mange parameteroppdateringer gir én epoke med ren SGD (ett punkt om gangen)?",
+     "stem": "Et nettverk trenes på N = 500 punkter. Hvor mange parameteroppdateringer gir én epoke med ren SGD (ett punkt om gangen)?\n(Formel: antall oppdateringer per epoke = N/B (B = batch size))",
      "options": [
       {
        "key": "A",
@@ -2746,7 +2746,7 @@
     {
      "n": 20,
      "tag": "5.2",
-     "stem": "Spill med v({}) = 0, v({1}) = 2, v({2}) = 6 og v({1,2}) = 12. Hva er φ₁?",
+     "stem": "Spill med v({}) = 0, v({1}) = 2, v({2}) = 6 og v({1,2}) = 12. Hva er φ₁?\n(Formel: φᵢ = Σ over S ⊆ N∖{i} av (|S|!·(n − |S| − 1)!/n!)·[v(S ∪ {i}) − v(S)], n = antall spillere)",
      "options": [
       {
        "key": "A",
@@ -2846,7 +2846,7 @@
     {
      "n": 24,
      "tag": "5.2",
-     "stem": "I SHAP er φ₀ = 0,4, og SHAP-verdiene for tre features er +0,3, −0,1 og +0,2. Hva er prediksjonen f(x*)?",
+     "stem": "I SHAP er φ₀ = 0,4, og SHAP-verdiene for tre features er +0,3, −0,1 og +0,2. Hva er prediksjonen f(x*)?\n(Formel: f(x*) = φ₀ + Σ φᵢ)",
      "options": [
       {
        "key": "A",
@@ -2871,7 +2871,7 @@
     {
      "n": 25,
      "tag": "5.2",
-     "stem": "Hvorfor er eksakt Shapley-beregning problematisk for 30 features?",
+     "stem": "Hvorfor er eksakt Shapley-beregning problematisk for 30 features?\n(Formel: antall koalisjoner (delmengder) = 2ⁿ, n = antall features)",
      "options": [
       {
        "key": "A",
@@ -3076,7 +3076,7 @@
     {
      "n": 3,
      "tag": "3.1",
-     "stem": "Hva er kvadrert euklidsk avstand d² mellom punktene (1, 2) og (4, 6)?",
+     "stem": "Hva er kvadrert euklidsk avstand d² mellom punktene (1, 2) og (4, 6)?\n(Formel: d² = Σ (aᵢ − bᵢ)²)",
      "options": [
       {
        "key": "A",
@@ -3101,7 +3101,7 @@
     {
      "n": 4,
      "tag": "3.1",
-     "stem": "En klynge har punktene (1, 1), (3, 5) og (5, 0). Hva blir den nye sentroiden?",
+     "stem": "En klynge har punktene (1, 1), (3, 5) og (5, 0). Hva blir den nye sentroiden?\n(Formel: sentroide μ = (1/|C|)·Σ x)",
      "options": [
       {
        "key": "A",
@@ -3501,7 +3501,7 @@
     {
      "n": 20,
      "tag": "3.2",
-     "stem": "Kovariansmatrisen til et datasett har egenverdiene 9 og 1. Hvor stor andel av variansen forklarer PC1?",
+     "stem": "Kovariansmatrisen til et datasett har egenverdiene 9 og 1. Hvor stor andel av variansen forklarer PC1?\n(Formel: andel forklart varians = λ₁/(λ₁ + λ₂ + …))",
      "options": [
       {
        "key": "A",
@@ -3931,7 +3931,7 @@
     {
      "n": 7,
      "tag": "4.2",
-     "stem": "Q(S, A) = 1, R = 0, max Q(S′, ·) = 2, α = 0,5 og γ = 0,9. Hva blir Q_new?",
+     "stem": "Q(S, A) = 1, R = 0, max Q(S′, ·) = 2, α = 0,5 og γ = 0,9. Hva blir Q_new?\n(Formel: Q_new(S, A) = (1 − α)·Q(S, A) + α·[R + γ·max Q(S′, ·)])",
      "options": [
       {
        "key": "A",
@@ -3956,7 +3956,7 @@
     {
      "n": 8,
      "tag": "4.2",
-     "stem": "Q(S, A) = 3 og spillet er over (done) med R = 10. Hva blir Q_new med α = 0,1 og γ = 0,9?",
+     "stem": "Q(S, A) = 3 og spillet er over (done) med R = 10. Hva blir Q_new med α = 0,1 og γ = 0,9?\n(Formel: Q_new(S, A) = (1 − α)·Q(S, A) + α·[R + γ·(1 − done)·max Q(S′, ·)], done = 1 når spillet er over)",
      "options": [
       {
        "key": "A",
@@ -3981,7 +3981,7 @@
     {
      "n": 9,
      "tag": "4.2",
-     "stem": "Q(S, A) = 5, R = 1, γ = 0,5 og max Q(S′, ·) = 6. Hva blir Q_new når α = 1?",
+     "stem": "Q(S, A) = 5, R = 1, γ = 0,5 og max Q(S′, ·) = 6. Hva blir Q_new når α = 1?\n(Formel: Q_new(S, A) = (1 − α)·Q(S, A) + α·[R + γ·max Q(S′, ·)])",
      "options": [
       {
        "key": "A",
@@ -4006,7 +4006,7 @@
     {
      "n": 10,
      "tag": "4.2",
-     "stem": "Hva skjer med Q-verdien hvis α = 0?",
+     "stem": "Hva skjer med Q-verdien hvis α = 0?\n(Formel: Q_new(S, A) = (1 − α)·Q(S, A) + α·[R + γ·max Q(S′, ·)])",
      "options": [
       {
        "key": "A",
@@ -4081,7 +4081,7 @@
     {
      "n": 13,
      "tag": "4.3",
-     "stem": "Med ε = 0,1 i ε-greedy, med hvilken sannsynlighet utnytter (exploit) agenten den beste kjente actionen?",
+     "stem": "Med ε = 0,1 i ε-greedy, med hvilken sannsynlighet utnytter (exploit) agenten den beste kjente actionen?\n(Formel: P(exploit) = 1 − ε)",
      "options": [
       {
        "key": "A",
@@ -4356,7 +4356,7 @@
     {
      "n": 24,
      "tag": "4.5",
-     "stem": "Samme DQN-situasjon, men spillet er over (done). Hva er y?",
+     "stem": "Samme DQN-situasjon, men spillet er over (done). Hva er y?\n(Formel: y = r + γ·(1 − done)·max Q_target(s′, ·), done = 1 når spillet er over)",
      "options": [
       {
        "key": "A",
@@ -4481,7 +4481,7 @@
     {
      "n": 29,
      "tag": "4.3",
-     "stem": "ε starter på 1,0 og multipliseres med decay = 0,9 etter hver episode. Hva er ε etter tre episoder (ε_min er lavere)?",
+     "stem": "ε starter på 1,0 og multipliseres med decay = 0,9 etter hver episode. Hva er ε etter tre episoder (ε_min er lavere)?\n(Formel: ε etter n episoder = ε₀·decayⁿ)",
      "options": [
       {
        "key": "A",

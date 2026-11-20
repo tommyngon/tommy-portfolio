@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { HANDHELD_DPR, HANDHELD_FRAME, handheld } from "./gl/handheld";
 import type { StoneFrame, StoneRenderer } from "./gl/stone";
 import s from "./StoneEnd.module.css";
 
@@ -155,7 +156,12 @@ export default function StoneMotion() {
     let lastRender = 0;
     let minGap = 1000 / 60;
     let shown = false;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // a phone: fewer backing px (the shader is a ray march per pixel), and once the stone has
+    // arrived and is left alone its slow turn is drawn 30 times a second (CALM). The scroll-linked
+    // parts still follow every frame, and a stone held by a finger is drawn every frame too.
+    const hand = handheld();
+    const dpr = Math.min(window.devicePixelRatio || 1, hand ? HANDHELD_DPR : 2);
+    const CALM = HANDHELD_FRAME * 1000;
 
     const onStone = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect();
@@ -312,9 +318,14 @@ export default function StoneMotion() {
       }
       flag(canvas, "live", arrive > 0.95);
 
-      // step the resolution down if frames run long (judged against the display's own rate)
+      const calm = hand && !held && arrive >= 1 && light === 0;
+      if (calm && lastRender && now - lastRender < CALM) return;
+
+      // step the resolution down if frames run long (judged against the display's own rate, or
+      // against 30 fps while calm)
       if (lastRender) {
-        slow = now - lastRender > Math.max(20, 1.6 * minGap) ? slow + 1 : Math.max(0, slow - 1);
+        const gap = calm ? Math.max(minGap, 1000 / 30) : minGap;
+        slow = now - lastRender > Math.max(20, 1.6 * gap) ? slow + 1 : Math.max(0, slow - 1);
         if (slow > 14 && quality > 0.6) {
           quality = Math.max(0.6, quality * 0.8);
           slow = 0;

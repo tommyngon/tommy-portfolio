@@ -3,11 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { LiveKind } from "@/lib/work";
-import { createLiveSource } from "./gl/live";
-import { SeamRenderer } from "./gl/seam";
+import type { SeamRenderer } from "./gl/seam";
 import css from "./SeamColumn.module.css";
 
-export type SeamItem = { src: string; alt: string; href: string; caption?: string; live?: LiveKind; mark?: string };
+export type SeamItem = { src: string; alt: string; href: string; caption?: string; live?: LiveKind; mark?: string; trip?: string };
 
 export default function SeamColumn({ items, className }: { items: SeamItem[]; className?: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -47,7 +46,10 @@ export default function SeamColumn({ items, className }: { items: SeamItem[]; cl
     let cancelled = false;
     let idle = 0;
     let settle = 0;
-    const start = () => {
+    // the renderer and the live sources load only now, off the first page's bundle
+    const start = async () => {
+      if (cancelled || renderer) return;
+      const [{ SeamRenderer }, { createLiveSource }] = await Promise.all([import("./gl/seam"), import("./gl/live")]);
       if (cancelled || renderer) return;
       renderer = SeamRenderer.create(canvas);
       if (!renderer) return;
@@ -59,13 +61,14 @@ export default function SeamColumn({ items, className }: { items: SeamItem[]; cl
           el,
           wrap,
           live: item?.live ? () => createLiveSource(item.live!) : undefined,
-          mark: item?.live ? item.mark : undefined,
+          mark: item?.live || item?.trip ? item.mark : undefined,
+          trip: item?.trip,
         });
       });
     };
     const whenIdle = () => {
-      if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(start, { timeout: 200 });
-      else idle = window.setTimeout(start, 80);
+      if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(() => void start(), { timeout: 200 });
+      else idle = window.setTimeout(() => void start(), 80);
     };
     const near = new IntersectionObserver(
       (es) => {

@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { LiveKind, Project } from "@/lib/work";
-import { createLiveSource } from "./gl/live";
 import type { LiveSource } from "./gl/seam";
 import Scramble from "./Scramble";
 import styles from "./sections.module.css";
@@ -20,27 +19,37 @@ function LivePaper({ kind, mark, on }: { kind: LiveKind; mark?: string; on: bool
   useEffect(() => {
     const host = hostRef.current;
     if (!on || !host) return;
-    if (!sourceRef.current) {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const created = createLiveSource(kind);
-      if (!created) return;
-      sourceRef.current = created;
-      host.appendChild(created.canvas);
-      if (mark) {
-        const img = document.createElement("img");
-        img.src = mark;
-        img.alt = "";
-        host.appendChild(img);
-      }
-    }
-    const source = sourceRef.current;
-    source.render(performance.now() / 1000);
-    host.dataset.on = "";
-    let raf = requestAnimationFrame(function tick(now) {
-      source.render(now / 1000);
-      raf = requestAnimationFrame(tick);
-    });
+    let raf = 0;
+    let gone = false;
+    const run = (source: LiveSource) => {
+      source.hover?.(true); // shown because its name is hovered: the Huskelappen sheets fan out
+      source.render(performance.now() / 1000);
+      host.dataset.on = "";
+      raf = requestAnimationFrame(function tick(now) {
+        source.render(now / 1000);
+        raf = requestAnimationFrame(tick);
+      });
+    };
+    if (sourceRef.current) run(sourceRef.current);
+    else if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      // loaded on the first hover (by then usually cached by the column), off the first page's bundle
+      void import("./gl/live").then(({ createLiveSource }) => {
+        if (gone || sourceRef.current) return;
+        const created = createLiveSource(kind);
+        if (!created) return;
+        sourceRef.current = created;
+        host.appendChild(created.canvas);
+        if (mark) {
+          const img = document.createElement("img");
+          img.src = mark;
+          img.alt = "";
+          host.appendChild(img);
+        }
+        run(created);
+      });
     return () => {
+      gone = true;
+      sourceRef.current?.hover?.(false);
       cancelAnimationFrame(raf);
       delete host.dataset.on;
     };

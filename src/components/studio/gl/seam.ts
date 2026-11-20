@@ -1,19 +1,24 @@
 // Raw WebGL2 renderer for the "seam bend" image column. Own code.
 // A live source (e.g. the QBIKK orb) draws itself into its own canvas; the column re-uploads
 // that canvas every frame while the sheet is on screen. `el` stays as the static fallback.
-// `mark` is a transparent sheet-sized layer (the QBIKK wordmark) laid over a live source in white.
+// `mark` is a transparent sheet-sized layer (the QBIKK wordmark) laid over a live source in its
+// own colour. `trip` is a plain picture used in place of the still, which the shader slowly
+// warps and tints (artefakt archive) while the mark stays put on top.
 //
 // Everything expensive is kept off the frames that matter: images are decoded off the main
 // thread (createImageBitmap on the fetched bytes), at most one GPU upload runs per frame,
 // and the loop only runs while a sheet is near the viewport. `changed` lets a live source
 // say nothing moved, so this frame needs no redraw or re-upload.
+import { HANDHELD_DPR, HANDHELD_FRAME, handheld } from "./handheld";
+
 export type LiveSource = {
   canvas: HTMLCanvasElement;
   render(timeSec: number): void;
   dispose(): void;
   changed?(timeSec: number): boolean;
+  hover?(on: boolean): void; // the pointer is over the sheet (or no longer)
 };
-export type SeamEntry = { el: HTMLImageElement; wrap: HTMLElement; live?: () => LiveSource | null; mark?: string };
+export type SeamEntry = { el: HTMLImageElement; wrap: HTMLElement; live?: () => LiveSource | null; mark?: string; trip?: string };
 
 const GRID = 32;
 
@@ -27,6 +32,7 @@ uniform float u_seed;  // per-image phase, so no two sheets bend alike
 uniform float u_time;  // seconds
 uniform float u_lift;  // 0..1 hover, the sheet swells a touch towards the viewer
 out vec2 v_uv;
+out vec2 v_q;        // the sheet's own uv, 0..1 edge to edge
 out float v_roll;    // 1 while the sheet is still facing us, 0 once rolled over the drum
 void main() {
   vec2 p = u_rect.xy + (a_uv - 0.5) * u_rect.zw * (1.0 + 0.015 * u_lift) + u_rect.zw * 0.5;
@@ -67,20 +73,48 @@ void main() {
   vec2 ndc = p / u_vp * 2.0 - 1.0;
   gl_Position = vec4(ndc.x, -ndc.y, 0.0, 1.0);
   v_uv = a_uv * u_crop.xy + u_crop.zw;
+  v_q = a_uv;
 }`;
 
 const FRAG = `#version 300 es
-precision mediump float;
+precision highp float; // the trip's warped coordinates need it on phones (mediump is a texel off)
 in vec2 v_uv;
+in vec2 v_q;
 in float v_roll;
 uniform sampler2D u_tex;
 uniform sampler2D u_mark;
 uniform float u_fade;
+uniform float u_feather; // 1 without MSAA (phones): the edges fade over their last backing px
+uniform float u_trip;    // 1 on a sheet whose picture drifts (artefakt archive), else 0
+uniform vec4 u_ph;       // the trip's slow phases, wrapped on the CPU so they never lose precision
 out vec4 o;
+
+// A gentle trip: the picture breathes in and out, its threads drift on a soft current with a
+// faint ripple from the middle, the colour fringes by a hair along the current, and the hues
+// wander a little, in time and in slow bands across the sheet. The paper, nearly grey, stays
+// paper. Displacements are in sheet units (a few css px at most).
+vec3 trip(vec2 q, vec2 uv) {
+  vec2 d = 0.0042 * vec2(sin(q.y * 7.0 + u_ph.x), sin(q.x * 6.0 - u_ph.y))
+         + 0.0022 * vec2(sin((q.x + q.y) * 17.0 - u_ph.y), sin((q.x - q.y) * 15.0 + u_ph.z))
+         + 0.0010 * vec2(sin(q.y * 41.0 + u_ph.z), sin(q.x * 37.0 - u_ph.x));
+  vec2 r = q - 0.5;
+  d += 0.0018 * r / max(length(r), 1e-3) * sin(length(r) * 38.0 - 2.0 * u_ph.w);
+  vec2 w = uv + d - 0.01 * (0.5 + 0.5 * sin(u_ph.w)) * r; // breathe: up to 1% closer
+  vec2 f = 0.4 * d;
+  vec3 c = vec3(texture(u_tex, w + f).r, texture(u_tex, w).g, texture(u_tex, w - f).b);
+  // turn the colour about the grey axis (Rodrigues), by up to ~15 degrees
+  float h = 0.15 * sin(u_ph.z) + 0.11 * sin(q.x * 5.0 + q.y * 7.0 + u_ph.x);
+  vec3 k = vec3(0.57735027);
+  float ch = cos(h), sh = sin(h);
+  return c * ch + cross(k, c) * sh + k * dot(k, c) * (1.0 - ch);
+}
+
 void main() {
-  vec3 c = texture(u_tex, v_uv).rgb;
-  c = mix(c, vec3(1.0), texture(u_mark, v_uv).a);
-  float a = u_fade * v_roll;
+  vec3 c = u_trip > 0.5 ? trip(v_q, v_uv) : texture(u_tex, v_uv).rgb;
+  vec4 m = texture(u_mark, v_uv); // premultiplied
+  c = c * (1.0 - m.a) + m.rgb;
+  vec2 e = min(v_q, 1.0 - v_q) / max(fwidth(v_q), vec2(1e-6)); // backing px to the nearest edge
+  float a = u_fade * v_roll * mix(1.0, clamp(min(e.x, e.y) + 0.5, 0.0, 1.0), u_feather);
   o = vec4(c * a, a);
 }`;
 
@@ -103,15 +137,18 @@ type Slot = {
   readyAt: number;
   lift: number;
   hover: boolean;
+  trip: boolean; // the texture is the plain `trip` picture: warp it
+  w: number; // the texture's size, for the cover crop
+  h: number;
   onLoad?: () => void;
 };
 
 // Off-main-thread decode. Same bytes the <img> already fetched, so this is a cache hit.
-async function decodeBitmap(url: string): Promise<ImageBitmap | null> {
+async function decodeBitmap(url: string, premultiply = false): Promise<ImageBitmap | null> {
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
-    return await createImageBitmap(await res.blob(), { premultiplyAlpha: "none", colorSpaceConversion: "default" });
+    return await createImageBitmap(await res.blob(), { premultiplyAlpha: premultiply ? "premultiply" : "none", colorSpaceConversion: "default" });
   } catch {
     return null;
   }
@@ -138,9 +175,13 @@ export class SeamRenderer {
   private running = false;
   private drew = false;
   private uploads: (() => void)[] = [];
+  private view: IntersectionObserver;
+  private hand = handheld(); // phones: dpr 1.5 without MSAA, and a still column drawn at 30 fps
+  private lastDraw = 0;
+  private lastDrawY = NaN;
 
   static create(canvas: HTMLCanvasElement) {
-    const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: true });
+    const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: !handheld() });
     if (!gl) return null;
     try {
       return new SeamRenderer(canvas, gl);
@@ -159,7 +200,7 @@ export class SeamRenderer {
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("link");
     this.prog = prog;
-    for (const n of ["u_rect", "u_vp", "u_amt", "u_tex", "u_mark", "u_fade", "u_crop", "u_seed", "u_time", "u_lift"]) this.loc[n] = gl.getUniformLocation(prog, n);
+    for (const n of ["u_rect", "u_vp", "u_amt", "u_tex", "u_mark", "u_fade", "u_crop", "u_seed", "u_time", "u_lift", "u_feather", "u_trip", "u_ph"]) this.loc[n] = gl.getUniformLocation(prog, n);
 
     const n = GRID + 1;
     const uv = new Float32Array(n * n * 2);
@@ -193,17 +234,26 @@ export class SeamRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.noMark);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
 
+    // textures load a screen ahead; the loop runs only while a sheet is within the 20% the
+    // frame itself draws (or an upload is waiting)
     this.io = new IntersectionObserver(
       (es) => {
         for (const e of es) {
           const s = this.slots.find((x) => x.entry.wrap === e.target);
-          if (!s) continue;
-          s.near = e.isIntersecting;
-          if (e.isIntersecting) this.request(s);
+          if (s && e.isIntersecting) this.request(s);
+        }
+      },
+      { rootMargin: "100% 0px 100% 0px" },
+    );
+    this.view = new IntersectionObserver(
+      (es) => {
+        for (const e of es) {
+          const s = this.slots.find((x) => x.entry.wrap === e.target);
+          if (s) s.near = e.isIntersecting;
         }
         this.updateLoop();
       },
-      { rootMargin: "100% 0px 100% 0px" },
+      { rootMargin: "20% 0px 20% 0px" },
     );
     this.resize();
     window.addEventListener("resize", this.resize);
@@ -214,7 +264,7 @@ export class SeamRenderer {
 
   // The loop and the canvas exist only while a sheet is within a screen of the viewport.
   private updateLoop() {
-    const near = !document.hidden && this.slots.some((x) => x.near);
+    const near = !document.hidden && (this.uploads.length > 0 || this.slots.some((x) => x.near));
     if (near && !this.running) {
       this.running = true;
       this.canvas.style.display = "block";
@@ -234,15 +284,23 @@ export class SeamRenderer {
     const r = entry.el.getBoundingClientRect();
     const keepDom = r.bottom > 0 && r.top < window.innerHeight;
     if (!keepDom) entry.el.style.opacity = "0";
-    this.slots.push({ entry, source: null, tex: null, markTex: null, wanted: false, near: false, keepDom, readyAt: 0, lift: 0, hover: false });
+    this.slots.push({ entry, source: null, tex: null, markTex: null, wanted: false, near: false, keepDom, readyAt: 0, lift: 0, hover: false, trip: false, w: 1, h: 1 });
     entry.wrap.addEventListener("pointerenter", () => this.setHover(entry, true));
     entry.wrap.addEventListener("pointerleave", () => this.setHover(entry, false));
     this.io.observe(entry.wrap);
+    this.view.observe(entry.wrap);
+  }
+
+  private queue(job: () => void) {
+    this.uploads.push(job);
+    this.updateLoop();
   }
 
   private setHover(entry: SeamEntry, on: boolean) {
     const s = this.slots.find((x) => x.entry === entry);
-    if (s) s.hover = on;
+    if (!s) return;
+    s.hover = on;
+    s.source?.hover?.(on);
   }
 
   private request(s: Slot) {
@@ -250,7 +308,7 @@ export class SeamRenderer {
     s.wanted = true;
     if (s.entry.mark) void this.loadMark(s, s.entry.mark);
     if (s.entry.live) {
-      this.uploads.push(() => this.prepareLive(s));
+      this.queue(() => this.prepareLive(s));
       return;
     }
     this.requestStill(s);
@@ -277,18 +335,20 @@ export class SeamRenderer {
   }
 
   private async loadMark(s: Slot, src: string) {
-    const bitmap = await decodeBitmap(src);
+    const bitmap = await decodeBitmap(src, true); // premultiplied, so its edges filter cleanly whatever colour its clear pixels carry
     if (this.disposed) {
       bitmap?.close();
       return;
     }
     if (!bitmap) return;
-    this.uploads.push(() => {
+    this.queue(() => {
       const gl = this.gl;
       const t = gl.createTexture()!;
       gl.bindTexture(gl.TEXTURE_2D, t);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); // (an ImageBitmap keeps its own; this is for the rest)
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
       bitmap.close();
       this.setTexParams();
       s.markTex = t;
@@ -297,12 +357,14 @@ export class SeamRenderer {
 
   private async loadStill(s: Slot) {
     const el = s.entry.el;
-    const bitmap = await decodeBitmap(el.currentSrc || el.src);
+    const trip = s.entry.trip ? await decodeBitmap(s.entry.trip) : null;
+    const bitmap = trip ?? (await decodeBitmap(el.currentSrc || el.src));
+    s.trip = Boolean(trip); // without its plain picture the sheet stays still, mark and all
     if (this.disposed) {
       bitmap?.close();
       return;
     }
-    this.uploads.push(() => this.uploadStill(s, bitmap));
+    this.queue(() => this.uploadStill(s, bitmap));
   }
 
   private uploadStill(s: Slot, bitmap: ImageBitmap | null) {
@@ -319,6 +381,8 @@ export class SeamRenderer {
       el.style.opacity = "";
       return;
     }
+    s.w = bitmap?.width ?? el.naturalWidth;
+    s.h = bitmap?.height ?? el.naturalHeight;
     bitmap?.close();
     this.setTexParams();
     s.tex = t;
@@ -334,6 +398,9 @@ export class SeamRenderer {
       return;
     }
     s.source = source;
+    s.w = source.canvas.width;
+    s.h = source.canvas.height;
+    if (s.hover) source.hover?.(true);
     const gl = this.gl;
     const t = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, t);
@@ -341,10 +408,12 @@ export class SeamRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    this.uploads.push(() => {
+    // storage once; every later picture overwrites it in place (texSubImage2D, no reallocation)
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, source.canvas.width, source.canvas.height);
+    this.queue(() => {
       gl.bindTexture(gl.TEXTURE_2D, t);
       source.render(performance.now() / 1000);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source.canvas);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, source.canvas);
       s.tex = t;
       s.readyAt = performance.now();
     });
@@ -355,7 +424,7 @@ export class SeamRenderer {
   };
 
   private resize = () => {
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.dpr = Math.min(window.devicePixelRatio || 1, this.hand ? HANDHELD_DPR : 2);
     this.canvas.width = Math.round(window.innerWidth * this.dpr);
     this.canvas.height = Math.round(window.innerHeight * this.dpr);
   };
@@ -363,7 +432,9 @@ export class SeamRenderer {
   private frame = (now: number) => {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(this.frame);
-    this.uploads.shift()?.(); // at most one upload per frame
+    const job = this.uploads.shift(); // at most one upload per frame
+    job?.();
+    if (job && !this.uploads.length) this.updateLoop(); // the last one done: the loop may rest
     const dt = Math.min((now - this.lastT) / 1000, 0.05) || 0.016;
     this.lastT = now;
     const y = window.scrollY;
@@ -378,6 +449,10 @@ export class SeamRenderer {
       this.vel = 0;
     }
 
+    // a phone at rest (no scroll, the bend settled, no fade running) only has the slow ripple
+    // and the live pictures (30 fps themselves) to show: draw at 30 fps
+    if (this.hand && this.amt === 0 && y === this.lastDrawY && now - this.lastDraw < HANDHELD_FRAME * 1000 && !this.slots.some((s) => s.readyAt && now - s.readyAt < 700)) return;
+
     const gl = this.gl;
     const vw = window.innerWidth, vh = window.innerHeight;
     // nothing on screen and nothing left over from the last frame: no GL work at all
@@ -388,6 +463,8 @@ export class SeamRenderer {
     const hasWork = inView.some(Boolean);
     if (!hasWork && !this.drew) return;
     this.drew = hasWork;
+    this.lastDraw = now;
+    this.lastDrawY = y;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -401,6 +478,9 @@ export class SeamRenderer {
     gl.uniform1f(this.loc.u_time, now / 1000);
     gl.uniform1i(this.loc.u_tex, 0);
     gl.uniform1i(this.loc.u_mark, 1);
+    gl.uniform1f(this.loc.u_feather, this.hand ? 1 : 0);
+    const sec = now / 1000, TAU = 2 * Math.PI;
+    gl.uniform4f(this.loc.u_ph, (sec * 0.31) % TAU, (sec * 0.23) % TAU, (sec * 0.17) % TAU, (sec * 0.7) % TAU);
     for (let i = 0; i < this.slots.length; i++) {
       const s = this.slots[i];
       const r = inView[i];
@@ -418,17 +498,18 @@ export class SeamRenderer {
       const live = s.source;
       if (live && (!live.changed || live.changed(now / 1000))) {
         live.render(now / 1000);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, live.canvas);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, live.canvas);
       }
       gl.uniform4f(this.loc.u_rect, r.left, r.top, r.width, r.height);
       // object-fit: cover — crop the longer side of the texture to the box's aspect
-      const ia = (live ? live.canvas.width : s.entry.el.naturalWidth) / (live ? live.canvas.height : s.entry.el.naturalHeight), ba = r.width / r.height;
+      const ia = s.w / s.h, ba = r.width / r.height;
       const sx = ia > ba ? ba / ia : 1, sy = ia > ba ? 1 : ia / ba;
       gl.uniform4f(this.loc.u_crop, sx, sy, (1 - sx) / 2, (1 - sy) / 2);
       s.lift += ((s.hover ? 1 : 0) - s.lift) * Math.min(1, dt * 6);
       gl.uniform1f(this.loc.u_lift, s.lift);
       gl.uniform1f(this.loc.u_fade, fade);
       gl.uniform1f(this.loc.u_seed, ((i * 0.618034) % 1));
+      gl.uniform1f(this.loc.u_trip, s.trip ? 1 : 0);
       gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
     }
   };
@@ -441,6 +522,7 @@ export class SeamRenderer {
     window.removeEventListener("resize", this.resize);
     document.removeEventListener("visibilitychange", this.onVis);
     this.io.disconnect();
+    this.view.disconnect();
     const gl = this.gl;
     for (const s of this.slots) {
       if (s.onLoad) s.entry.el.removeEventListener("load", s.onLoad);

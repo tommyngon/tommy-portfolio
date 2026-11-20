@@ -2,7 +2,7 @@
 // images live in /public/work/ (prepared by the asset step).
 
 export type WorkImage = { src: string; alt: string };
-export type LiveKind = "orb" | "keys" | "dial";
+export type LiveKind = "orb" | "keys" | "dial" | "husk";
 
 export type Project = {
   slug: string;
@@ -15,8 +15,10 @@ export type Project = {
   images?: WorkImage[]; // omitted until the project has pictures
   // the one sheet this project gets in the scrolling column; `live` swaps the still for an
   // animated source (the still stays as the fallback without WebGL or with reduced motion).
-  // `mark` is a transparent sheet-sized layer drawn on top of the live source, in white.
-  cover?: WorkImage & { live?: LiveKind; mark?: string };
+  // `mark` is a transparent sheet-sized layer drawn on top of the live source, in its own colour.
+  // `trip` is the picture alone (no mark), which the column slowly warps and tints while the
+  // mark stays put on top; the still is that picture with the mark already laid on.
+  cover?: WorkImage & { live?: LiveKind; mark?: string; trip?: string };
 };
 
 export const PROJECTS: Project[] = [
@@ -112,7 +114,12 @@ export const PROJECTS: Project[] = [
     ],
     outcome: "Made by hand, in small numbers",
     credit: "Sewn by Tommy Ngo Nguyen in Trondheim, Norway",
-    cover: { src: "/work/artefakt-sheet.webp", alt: "artefakt archive: logo over a loosely woven red textile" },
+    cover: {
+      src: "/work/artefakt-weave-sheet.webp",
+      alt: "artefakt archive: the logo in white over a hand-drawn woven pattern in red, blue and teal",
+      trip: "/work/artefakt-weave.webp",
+      mark: "/work/artefakt-mark.webp",
+    },
     images: [
       { src: "/work/som-1.webp", alt: "artefakt archive: placeholder print, front" },
       { src: "/work/som-2.webp", alt: "artefakt archive: placeholder print, profile" },
@@ -126,7 +133,12 @@ export const PROJECTS: Project[] = [
     specs: [{ label: "Type", value: "Application" }],
     outcome: "More soon.",
     credit: "Tommy Ngo Nguyen, Trondheim, Norway",
-    cover: { src: "/work/huskelappen-cards-sheet.webp", alt: "Huskelappen: a stack of translucent cards above the name" },
+    cover: {
+      src: "/work/huskelappen-sheet.webp",
+      alt: "Huskelappen: the app's four translucent diamonds above the name, on light blue",
+      live: "husk",
+      mark: "/work/huskelappen-mark.webp",
+    },
   },
 ];
 

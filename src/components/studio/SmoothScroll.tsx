@@ -3,8 +3,13 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
+import { HANDHELD_QUERY } from "./gl/handheld";
 
-// Lenis smooth scroll for every studio page. Native scrolling under prefers-reduced-motion.
+// Lenis smooth scroll for every studio page. Native scrolling under prefers-reduced-motion,
+// and on touch screens without a mouse or trackpad: there Lenis leaves the finger to the
+// browser anyway (no syncTouch), but its touch listeners are not passive, so every swipe would
+// wait on a busy main thread, and its loop would tick every frame for nothing. (ContactDialog
+// locks the page itself too, so the lock still holds without Lenis.)
 // Other components pause it with a window CustomEvent "studio:scroll-lock" {detail: boolean}.
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
@@ -12,6 +17,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const touch = window.matchMedia(HANDHELD_QUERY);
     let raf = 0;
     let locked = false;
 
@@ -21,7 +27,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       lenisRef.current = null;
     };
     const start = () => {
-      if (lenisRef.current || mq.matches) return;
+      if (lenisRef.current || mq.matches || touch.matches) return;
       // same settle as the reference, and 1.4x travel per wheel notch (measured side by side)
       const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 1.4 });
       lenisRef.current = lenis;
@@ -37,14 +43,16 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       if (locked) lenisRef.current?.stop();
       else lenisRef.current?.start();
     };
-    const onMq = () => (mq.matches ? stop() : start());
+    const onMq = () => (mq.matches || touch.matches ? stop() : start());
 
     start();
     window.addEventListener("studio:scroll-lock", onLock);
     mq.addEventListener("change", onMq);
+    touch.addEventListener("change", onMq);
     return () => {
       window.removeEventListener("studio:scroll-lock", onLock);
       mq.removeEventListener("change", onMq);
+      touch.removeEventListener("change", onMq);
       stop();
     };
   }, []);

@@ -2,6 +2,8 @@
 // as a texture each frame. Same projection, colours and press loop as the site's hero
 // (stackwise-tetris.vercel.app); no wordmark or page around it, the keyboard fills the sheet.
 
+import { HANDHELD_FRAME, HANDHELD_SCALE, handheld } from "./handheld";
+
 // colours sampled by the site from its reference poster
 const PK = "#f955b4";
 const DK = "#f7219d";
@@ -120,6 +122,8 @@ export class KeysSource {
   private clip = sinkClip();
   private disposed = false;
   private pressedLastFrame = false;
+  private last = -Infinity;
+  private minFrame = handheld() ? HANDHELD_FRAME : 0; // phones: a press is drawn 30 times a second
 
   private constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
@@ -129,8 +133,10 @@ export class KeysSource {
   static create(width = 800, height = 1000): KeysSource | null {
     if (typeof document === "undefined") return null;
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(width));
-    canvas.height = Math.max(1, Math.round(height));
+    // on a phone the sheet is ~300 css px wide: a smaller picture, same drawing (it scales with the canvas)
+    const k = handheld() ? HANDHELD_SCALE : 1;
+    canvas.width = Math.max(1, Math.round(width * k));
+    canvas.height = Math.max(1, Math.round(height * k));
     const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return null;
     return new KeysSource(canvas, ctx);
@@ -175,9 +181,12 @@ export class KeysSource {
       const p = (((timeSec - delay) % CYCLE) + CYCLE) % CYCLE / CYCLE;
       return p < PRESS_END;
     });
-    const out = pressing || this.pressedLastFrame; // one more frame after a press ends, so the key is drawn back at rest
-    this.pressedLastFrame = pressing;
-    return out;
+    if (!pressing && !this.pressedLastFrame) return false;
+    // too soon for the next picture: wait, and keep owing the frame at rest if a press just ended
+    if (timeSec - this.last < this.minFrame) return false;
+    this.last = timeSec;
+    this.pressedLastFrame = pressing; // one more frame after a press ends, so the key is drawn back at rest
+    return true;
   }
 
   /** Draws one frame at `timeSec`; `pressing: false` draws every key at rest (the still). */

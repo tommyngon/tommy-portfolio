@@ -3,6 +3,8 @@
 // 60 ticks at a 6 degree pitch roll past an emphasis group that rests at 12 o'clock, exactly
 // as the ring's ticks roll under its pointer. The wordmark is the sheet's `mark` layer.
 
+import { HANDHELD_FRAME, HANDHELD_SCALE, handheld } from "./handheld";
+
 const INK = "#ececee"; // --menu-ring-tick in the app's dark theme
 const BG = "#000";
 
@@ -30,6 +32,7 @@ export class DialSource {
   private ctx: CanvasRenderingContext2D;
   private disposed = false;
   private last = -1;
+  private minFrame = handheld() ? HANDHELD_FRAME : MIN_FRAME; // phones: 30 a second
 
   private constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
@@ -39,15 +42,17 @@ export class DialSource {
   static create(width = 800, height = 1000): DialSource | null {
     if (typeof document === "undefined") return null;
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(width));
-    canvas.height = Math.max(1, Math.round(height));
+    // on a phone the sheet is ~300 css px wide: a smaller picture, same drawing (it scales with the canvas)
+    const k = handheld() ? HANDHELD_SCALE : 1;
+    canvas.width = Math.max(1, Math.round(width * k));
+    canvas.height = Math.max(1, Math.round(height * k));
     const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return null;
     return new DialSource(canvas, ctx);
   }
 
   changed(timeSec: number): boolean {
-    if (timeSec - this.last < MIN_FRAME) return false;
+    if (timeSec - this.last < this.minFrame) return false;
     this.last = timeSec;
     return true;
   }

@@ -32,22 +32,19 @@ const TUMBLE: [number, number, number][] = [
   [-45, -40, 18],
   [58, 50, -25],
   [-50, 42, 20],
+  [46, -48, -18],
+  [-52, -44, 24],
 ];
 
 // sideways drift mid-fall, in card widths: the cards fan out and overlap before lining up
-const SCATTER = [0.85, -0.7, 0.55, -0.9, 0.45];
+const SCATTER = [0.85, -0.7, 0.55, -0.9, 0.45, -0.6, 0.75];
 
 type Target = "home" | "work" | "other";
 
 function pickImages(target: Target): string[] {
   const col = COLUMN.map((c) => c.src);
-  if (target === "home") {
-    return [
-      "/portrait/front.webp",
-      ...col.slice(0, 4),
-      "/portrait/profile-right-v2.webp",
-    ].filter(Boolean);
-  }
+  // home: the portrait that lands on the sheet, then every project in order
+  if (target === "home") return ["/portrait/front.webp", ...col].filter(Boolean);
   return col.slice(0, 5);
 }
 

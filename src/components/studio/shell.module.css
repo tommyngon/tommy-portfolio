@@ -130,7 +130,7 @@
 .thumb {
   position: absolute;
   display: block;
-  width: 4.7vw;
+  width: min(4.7vw, 8.4vh); /* seven cards and their gaps fit under the top 18% even on a short, wide screen */
   aspect-ratio: 4 / 5;
   opacity: 0;
   transform-origin: 50% 50%;
@@ -145,7 +145,7 @@
 }
 @media (max-width: 640px) {
   .thumb {
-    width: 13vw;
+    width: min(13vw, 8.4vh);
   }
 }
 .skipIntro,
@@ -408,6 +408,18 @@
   .panel {
     width: calc(100vw - 2 * var(--gutter));
     padding: 20px;
+  }
+}
+/* touch screens: the 2px blur under the dark veil is all but invisible there, yet it re-filters
+   the whole page behind on every frame of the sheet's rise; and the page is locked by overflow
+   alone (no Lenis), so a scroll inside the panel never runs on into it */
+@media (hover: none) and (pointer: coarse) {
+  .dialogVeil {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .panel {
+    overscroll-behavior: contain;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -3,6 +3,7 @@
 // light theme: same rotation drift, breathing squash, scale pulse and bob; level, energy,
 // processing and bloom all at rest; dark theme (uDark = 1) on a deep grey-black.
 import { CUBE_FRAG, CUBE_VERT } from "@/components/qbikk/cube-shader";
+import { HANDHELD_FRAME, HANDHELD_SCALE, handheld } from "./handheld";
 
 const UNIFORMS = ["uRes", "uTime", "uRot", "uSquash", "uLevel", "uEnergy", "uProc", "uBloom", "uScale", "uBg", "uDark"] as const;
 type UniformName = (typeof UNIFORMS)[number];
@@ -46,6 +47,8 @@ export class OrbSource {
   private shaders: WebGLShader[];
   private U: Record<UniformName, WebGLUniformLocation | null>;
   private disposed = false;
+  private last = -Infinity;
+  private minFrame = handheld() ? HANDHELD_FRAME : 0; // phones: a new picture 30 times a second
 
   private constructor(
     canvas: HTMLCanvasElement,
@@ -66,8 +69,10 @@ export class OrbSource {
   static create(width = 640, height = 800): OrbSource | null {
     if (typeof document === "undefined") return null;
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(width));
-    canvas.height = Math.max(1, Math.round(height));
+    // on a phone the sheet is ~300 css px wide: a smaller picture, same framing (it scales with the canvas)
+    const k = handheld() ? HANDHELD_SCALE : 1;
+    canvas.width = Math.max(1, Math.round(width * k));
+    canvas.height = Math.max(1, Math.round(height * k));
     const gl = canvas.getContext("webgl", { alpha: false, antialias: false, preserveDrawingBuffer: true });
     if (!gl) return null;
     const shaders: WebGLShader[] = [];
@@ -107,6 +112,13 @@ export class OrbSource {
       for (const s of shaders) gl.deleteShader(s);
       return null;
     }
+  }
+
+  /** Whether a new picture is due (always, except on phones: at most 30 a second). */
+  changed(timeSec: number): boolean {
+    if (timeSec - this.last < this.minFrame) return false;
+    this.last = timeSec;
+    return true;
   }
 
   /** Draws one frame of the idle orb at `timeSec` (the section's `clock`). */
